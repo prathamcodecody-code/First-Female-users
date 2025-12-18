@@ -1,7 +1,13 @@
 "use client";
 import { useEffect } from "react";
 
-export default function Toast({ message, onClose }: { message: string; onClose: () => void }) {
+interface ToastProps {
+  message: string;
+  onClose: () => void;
+  type?: "success" | "error"; // Add this line!
+}
+
+export default function Toast({ message, onClose, type = "success" }: ToastProps) {
   useEffect(() => {
     const timer = setTimeout(() => onClose(), 2000); // auto-hide in 2 sec
     return () => clearTimeout(timer);
