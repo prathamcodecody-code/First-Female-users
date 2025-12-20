@@ -1,5 +1,20 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: "http://localhost:3030",
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  withCredentials: true,
+});
+
+// Attach token automatically
+api.interceptors.request.use((config) => {
+  const token = typeof window !== "undefined"
+    ? localStorage.getItem("token")
+    : null;
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
+
 });
