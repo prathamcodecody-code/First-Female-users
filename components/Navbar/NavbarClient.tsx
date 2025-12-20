@@ -71,7 +71,8 @@ useEffect(() => {
 
         {/* CATEGORIES */}
         <div className="hidden lg:flex items-center gap-8 font-semibold text-[13px] tracking-wide">
-          {categories.map((c) => (
+          {Array.isArray(categories) &&
+  categories.map((c) => (
             <div
               key={c.id}
               className="relative"
