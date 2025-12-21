@@ -8,7 +8,7 @@ export default async function CategoryPage({
   const { id } = await params; // ✅ REQUIRED
 
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/products?categoryId=${id}`,
+    `${process.env.NEXT_PUBLIC_API_URL}/all-products?categoryId=${id}`,
     { cache: "no-store" }
   );
 
