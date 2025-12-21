@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import ProductClient from "./ProductClient";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -6,7 +8,6 @@ type PageProps = {
   params: { slug: string };
 };
 
-/* ---------- SEO ---------- */
 export async function generateMetadata(
   { params }: PageProps
 ): Promise<Metadata> {
@@ -16,9 +17,7 @@ export async function generateMetadata(
   );
 
   if (!res.ok) {
-    return {
-      title: "Product Not Found | FirstFemale",
-    };
+    return { title: "Product Not Found | FirstFemale" };
   }
 
   const product = await res.json();
@@ -29,7 +28,6 @@ export async function generateMetadata(
   };
 }
 
-/* ---------- PAGE ---------- */
 export default async function ProductPage({ params }: PageProps) {
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/products/${params.slug}`,
@@ -37,13 +35,9 @@ export default async function ProductPage({ params }: PageProps) {
   );
 
   if (!res.ok) {
-    notFound(); // ❗ DO NOT return JSX here
+    notFound();
   }
 
   const product = await res.json();
-
-  // 🔥 GUARANTEE render
-  return (
-    <ProductClient product={product} />
-  );
+  return <ProductClient product={product} />;
 }
