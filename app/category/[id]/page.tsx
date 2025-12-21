@@ -1,24 +1,9 @@
-import CategoryClient from "./CategoryClient";
+import { redirect } from "next/navigation";
 
-export default async function CategoryPage({
+export default function CategoryPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }) {
-  const { id } = await params; // ✅ REQUIRED
-
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/all-products?categoryId=${id}`,
-    { cache: "no-store" }
-  );
-
-  const data = await res.json();
-  const products = Array.isArray(data?.products) ? data.products : [];
-
-  return (
-    <CategoryClient
-      products={products}
-      categoryId={id}
-    />
-  );
+  redirect(`/all-products?categoryId=${params.id}`);
 }
