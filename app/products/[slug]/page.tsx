@@ -6,43 +6,43 @@ import ProductClient from "./ProductClient";
 import { notFound } from "next/navigation";
 
 type PageProps = {
-params: { slug: string };
+  params: { slug: string };
 };
 
 export default async function ProductPage({ params }: PageProps) {
-try {
-console.log("📦 Full params.slug:", params.slug);
+  try {
+    // Extract slug from "slug-id" format
+    const lastDashIndex = params.slug.lastIndexOf('-');
+    
+    if (lastDashIndex === -1) {
+      notFound();
+    }
+    
+    const actualSlug = params.slug.substring(0, lastDashIndex);
+    
+    // Use NEXT_PUBLIC_API_URL or fallback to hardcoded URL
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.firstfemale.in';
+    const apiUrl = `${apiBaseUrl}/products/${actualSlug}`;
+    
+    console.log("📦 Fetching:", apiUrl);
+    
+    const res = await fetch(apiUrl, { 
+      cache: "no-store",
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
 
-// Extract the actual slug by removing the ID suffix
-const slugParts = params.slug.split('-');
-console.log("📦 Split parts:", slugParts);
+    if (!res.ok) {
+      console.error("❌ API Error:", res.status, await res.text());
+      notFound();
+    }
 
-const actualSlug = slugParts.slice(0, -1).join('-');
-console.log("📦 Actual slug:", actualSlug);
-
-const apiUrl = `${process.env.API_URL}/products/${actualSlug}`;
-console.log("📦 Fetching from:", apiUrl);
-
-const res = await fetch(apiUrl, {
-cache: "no-store",
-headers: {
-'Content-Type': 'application/json',
-}
-});
-
-console.log("📦 Response status:", res.status);
-
-if (!res.ok) {
-console.error("❌ Fetch failed:", res.status, res.statusText);
-notFound();
-}
-
-const product = await res.json();
-console.log("✅ Product fetched:", product.title);
-
-return <ProductClient product={product} />;
-} catch (error) {
-console.error("💥 Error in ProductPage:", error);
-throw error; // Re-throw to trigger Next.js error page
-}
+    const product = await res.json();
+    return <ProductClient product={product} />;
+    
+  } catch (error) {
+    console.error("💥 ProductPage Error:", error);
+    notFound();
+  }
 }
