@@ -8,8 +8,8 @@ import { api } from "@/lib/api";
 // Category images map
 const categoryImages: Record<number, string> = {
   1: "/categories/women.jpg",
-  5: "/categories/men.jpg",
-  6: "/categories/kids.jpg",
+  2: "/categories/men.jpg",
+  3: "/categories/kids.jpg",
 };
 
 export default function CategoryGrid() {
@@ -123,4 +123,3 @@ export default function CategoryGrid() {
     </section>
   );
 }
-
