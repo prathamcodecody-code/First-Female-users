@@ -1,4 +1,5 @@
 export const dynamic = "force-dynamic";
+export const dynamicParams = true;
 
 import ProductClient from "./ProductClient";
 import { Metadata } from "next";
