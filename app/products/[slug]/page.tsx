@@ -11,20 +11,29 @@ type PageProps = {
 
 export default async function ProductPage({ params }: PageProps) {
   try {
-    // Extract slug from "slug-id" format
-    const lastDashIndex = params.slug.lastIndexOf('-');
+    // params.slug will be something like "test1-1"
+    const fullSlug = params.slug;
+    
+    // Find the last dash to separate slug from ID
+    const lastDashIndex = fullSlug.lastIndexOf('-');
     
     if (lastDashIndex === -1) {
+      console.error("No dash found in slug:", fullSlug);
       notFound();
     }
     
-    const actualSlug = params.slug.substring(0, lastDashIndex);
+    // Extract just the slug part (everything before last dash)
+    const productSlug = fullSlug.substring(0, lastDashIndex);
+    const productId = fullSlug.substring(lastDashIndex + 1);
     
-    // Use NEXT_PUBLIC_API_URL or fallback to hardcoded URL
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.firstfemale.in';
-    const apiUrl = `${apiBaseUrl}/products/${actualSlug}`;
+    console.log("=== DEBUG ===");
+    console.log("Full slug from URL:", fullSlug);
+    console.log("Extracted slug:", productSlug);
+    console.log("Extracted ID:", productId);
     
-    console.log("📦 Fetching:", apiUrl);
+    // Try fetching by slug first
+    const apiUrl = `https://api.firstfemale.in/products/${productSlug}`;
+    console.log("Fetching from:", apiUrl);
     
     const res = await fetch(apiUrl, { 
       cache: "no-store",
@@ -33,16 +42,30 @@ export default async function ProductPage({ params }: PageProps) {
       }
     });
 
+    console.log("Response status:", res.status);
+
     if (!res.ok) {
-      console.error("❌ API Error:", res.status, await res.text());
+      const errorText = await res.text();
+      console.error("API Error Response:", errorText);
       notFound();
     }
 
     const product = await res.json();
+    console.log("Product fetched successfully:", product.title);
+    
     return <ProductClient product={product} />;
     
   } catch (error) {
-    console.error("💥 ProductPage Error:", error);
-    notFound();
+    console.error("Fatal error in ProductPage:", error);
+    // Return a more helpful error page
+    return (
+      <div className="p-8">
+        <h1 className="text-2xl font-bold">Error Loading Product</h1>
+        <p className="text-red-600">{String(error)}</p>
+        <pre className="mt-4 p-4 bg-gray-100 rounded">
+          {JSON.stringify({ slug: params.slug }, null, 2)}
+        </pre>
+      </div>
+    );
   }
 }
