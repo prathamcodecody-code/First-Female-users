@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import AddToCartButton from "@/components/cart/AddToCartButton";
 import AddToWishlistButton from "@/components/wishlist/AddToWishlistButton";
 
 type Product = {
@@ -24,10 +25,11 @@ export default function ProductCard({ product }: { product?: Product }) {
     ? `${process.env.NEXT_PUBLIC_API_URL}/uploads/products/${product.img1}`
     : "/placeholder.png";
 
-  const productUrl = product.slug
-    ? `/products/${product.slug}`
+  const productUrl =
+  product.slug && product.id
+    ? `/products/${product.slug}-${product.id}`
     : `/products/${product.id}`;
-
+    
   const price = Number(product.price) || 0;
 
   // ---------- DISCOUNT LOGIC ----------
@@ -110,9 +112,11 @@ export default function ProductCard({ product }: { product?: Product }) {
 
       {/* ADD TO CART */}
       <div className="px-3 pb-3">
-        
+        <AddToCartButton
+          productId={product.id}
+          stock={product.stock ?? 0}
+        />
       </div>
     </div>
   );
 }
-
