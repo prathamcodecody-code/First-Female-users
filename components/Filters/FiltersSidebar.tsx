@@ -6,17 +6,20 @@ import Link from "next/link";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 type FilterSidebarProps = {
-  categoryId: string;
+  categoryId?: string | number;
 };
 
 export default function FiltersSidebar({ categoryId }: FilterSidebarProps) {
   const [types, setTypes] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
 
-  const cid = String(categoryId);
+  const cid = categoryId ? String(categoryId) : null;
 
   useEffect(() => {
-    if (!cid) return;
+    if (!cid) {
+    setTypes([]);
+    return;
+  }
 
     api
       .get(`/product-types?categoryId=${cid}`)
@@ -51,7 +54,11 @@ export default function FiltersSidebar({ categoryId }: FilterSidebarProps) {
           {types.map((t) => (
             <div key={t.id}>
               <Link
-                href={`/all-products?categoryId=${cid}&typeId=${t.id}`}
+                href={
+    cid
+      ? `/all-products?categoryId=${cid}&typeId=${t.id}`
+      : `/all-products?typeId=${t.id}`
+  }
                 className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:bg-pink-50"
                 onClick={() => setOpen(false)}
               >
