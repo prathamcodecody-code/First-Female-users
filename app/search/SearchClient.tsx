@@ -6,12 +6,24 @@ import { api } from "@/lib/api";
 import ProductCard from "@/components/ProductCard";
 import FiltersSidebar from "@/components/Filters/FiltersSidebar";
 
+type SearchClientProps = {
+  searchParams: {
+    categoryId?: string;
+    typeId?: string;
+    subtypeId?: string;
+    minPrice?: string;
+    maxPrice?: string;
+    stock?: string;
+  };
+};
+
 export default function SearchClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
   const query = searchParams.get("query") || "";
   const sortParam = searchParams.get("sort") || "relevance";
+  const categoryId = searchParams.get("categoryId");
 
   const [products, setProducts] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
@@ -95,9 +107,7 @@ export default function SearchClient() {
 
       <div className="grid grid-cols-12 gap-6">
         <aside className="hidden md:block md:col-span-3">
-          {categoryId && (
-  <FiltersSidebar categoryId={categoryId as string} />
-)}
+          {categoryId && <FiltersSidebar categoryId={categoryId} />}
         </aside>
 
         <main className="col-span-12 md:col-span-9">
