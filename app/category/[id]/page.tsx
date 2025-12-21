@@ -5,5 +5,9 @@ export default function CategoryPage({
 }: {
   params: { id: string };
 }) {
+  if (!params.id || isNaN(Number(params.id))) {
+    redirect("/");
+  }
+
   redirect(`/all-products?categoryId=${params.id}`);
 }
