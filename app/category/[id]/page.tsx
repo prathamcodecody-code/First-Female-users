@@ -1,13 +1,15 @@
 import { redirect } from "next/navigation";
 
-export default function CategoryPage({
+export default async function CategoryPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  if (!params.id || isNaN(Number(params.id))) {
+  const { id } = await params; // ✅ CRITICAL FIX
+
+  if (!id || isNaN(Number(id))) {
     redirect("/");
   }
 
-  redirect(`/all-products?categoryId=${params.id}`);
+  redirect(`/all-products?categoryId=${id}`);
 }
