@@ -1,15 +1,16 @@
 import ProductClient from "./ProductClient";
 import { Metadata } from "next";
+import { notFound } from "next/navigation";
 
 type PageProps = {
-  params: Promise<{ slug: string }>;
+  params: { slug: string };
 };
 
 /* ---------------- SEO METADATA ---------------- */
 export async function generateMetadata(
   { params }: PageProps
 ): Promise<Metadata> {
-  const { slug } = await params;
+  const slug = params.slug;
 
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/products/${slug}`,
@@ -38,15 +39,21 @@ export async function generateMetadata(
     openGraph: {
       title: product.metaTitle || product.title,
       description: product.metaDescription,
-      url: `https://firstfemale.com/products/${product.slug}-${product.id}`,
-      images: [product.img1],
+      url: `https://first-female-users.vercel.app/products/${product.slug}-${product.id}`,
+      images: product.img1
+        ? [
+            {
+              url: `${process.env.NEXT_PUBLIC_API_URL}/uploads/products/${product.img1}`,
+            },
+          ]
+        : [],
     },
   };
 }
 
 /* ---------------- PAGE ---------------- */
 export default async function ProductPage({ params }: PageProps) {
-  const { slug } = await params;
+  const slug = params.slug;
 
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/products/${slug}`,
@@ -54,13 +61,14 @@ export default async function ProductPage({ params }: PageProps) {
   );
 
   if (!res.ok) {
-    return (
-      <div className="p-10 text-center text-gray-500">
-        Product not found.
-      </div>
-    );
+    return notFound();
   }
 
   const product = await res.json();
+
+  if (!product?.id) {
+    return notFound();
+  }
+
   return <ProductClient product={product} />;
 }
