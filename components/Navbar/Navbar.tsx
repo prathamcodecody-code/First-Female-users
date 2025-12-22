@@ -5,7 +5,7 @@ export default async function Navbar() {
 
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/categories`,
+      `${process.env.NEXT_PUBLIC_API_URL}categories`,
       { cache: "no-store" }
     );
 
@@ -25,3 +25,4 @@ export default async function Navbar() {
     </nav>
   );
 }
+
