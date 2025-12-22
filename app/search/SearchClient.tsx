@@ -52,7 +52,9 @@ export default function SearchClient() {
       if (maxPrice) params.append("maxPrice", maxPrice);
       if (stock) params.append("stock", stock);
 
-      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || 'https://api.firstfemale.in'}products?${params.toString()}`;
+      // Remove trailing slash if exists
+      const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://api.firstfemale.in').replace(/\/$/, '');
+      const apiUrl = `${baseUrl}/products?${params.toString()}`;
       
       console.log("🔍 Searching:", apiUrl);
 
@@ -64,7 +66,9 @@ export default function SearchClient() {
       });
 
       if (!res.ok) {
-        throw new Error(`API returned ${res.status}`);
+        const errorText = await res.text();
+        console.error("❌ API Error Response:", errorText);
+        throw new Error(`API returned ${res.status}: ${errorText}`);
       }
 
       const data = await res.json();
@@ -171,4 +175,3 @@ export default function SearchClient() {
     </div>
   );
 }
-
