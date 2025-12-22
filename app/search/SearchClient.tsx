@@ -52,7 +52,7 @@ export default function SearchClient() {
       if (maxPrice) params.append("maxPrice", maxPrice);
       if (stock) params.append("stock", stock);
 
-      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || 'https://api.firstfemale.in'}/products?${params.toString()}`;
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || 'https://api.firstfemale.in'}products?${params.toString()}`;
       
       console.log("🔍 Searching:", apiUrl);
 
@@ -171,3 +171,4 @@ export default function SearchClient() {
     </div>
   );
 }
+
