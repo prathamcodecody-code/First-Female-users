@@ -2,20 +2,7 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
-import { api } from "@/lib/api";
 import ProductCard from "@/components/ProductCard";
-import FiltersSidebar from "@/components/Filters/FiltersSidebar";
-
-type SearchClientProps = {
-  searchParams: {
-    categoryId?: string;
-    typeId?: string;
-    subtypeId?: string;
-    minPrice?: string;
-    maxPrice?: string;
-    stock?: string;
-  };
-};
 
 export default function SearchClient() {
   const searchParams = useSearchParams();
@@ -24,6 +11,11 @@ export default function SearchClient() {
   const query = searchParams.get("query") || "";
   const sortParam = searchParams.get("sort") || "relevance";
   const categoryId = searchParams.get("categoryId");
+  const typeId = searchParams.get("typeId");
+  const subtypeId = searchParams.get("subtypeId");
+  const minPrice = searchParams.get("minPrice");
+  const maxPrice = searchParams.get("maxPrice");
+  const stock = searchParams.get("stock");
 
   const [products, setProducts] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
@@ -42,28 +34,59 @@ export default function SearchClient() {
       setLoading(true);
       setError("");
 
-      const params: any = { search: query };
-      if (sort !== "relevance") params.sort = sort;
+      // Build query parameters
+      const params = new URLSearchParams();
+      params.append("search", query);
+      
+      if (sort && sort !== "relevance") {
+        // Map frontend sort to backend sort
+        if (sort === "newest") params.append("sort", "newest");
+        if (sort === "low_to_high") params.append("sort", "low_to_high");
+        if (sort === "high_to_low") params.append("sort", "high_to_low");
+      }
+      
+      if (categoryId) params.append("categoryId", categoryId);
+      if (typeId) params.append("typeId", typeId);
+      if (subtypeId) params.append("subtypeId", subtypeId);
+      if (minPrice) params.append("minPrice", minPrice);
+      if (maxPrice) params.append("maxPrice", maxPrice);
+      if (stock) params.append("stock", stock);
 
-      const res = await api.get("/products", { params });
-      const data = res.data;
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || 'https://api.firstfemale.in'}/products?${params.toString()}`;
+      
+      console.log("🔍 Searching:", apiUrl);
 
-      const list = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.products)
-        ? data.products
-        : [];
+      const res = await fetch(apiUrl, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-      setProducts(list);
-      setTotal(typeof data?.total === "number" ? data.total : list.length);
+      if (!res.ok) {
+        throw new Error(`API returned ${res.status}`);
+      }
+
+      const data = await res.json();
+      
+      console.log("📦 Search results:", data);
+
+      // Handle the response structure from your backend
+      // Your backend returns: { products: [...], total: number, page: number, pages: number }
+      const productsList = data.products || [];
+      const totalCount = data.total || 0;
+
+      setProducts(productsList);
+      setTotal(totalCount);
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Failed to load products");
+      console.error("❌ Search error:", err);
+      setError(err?.message || "Failed to load products");
       setProducts([]);
       setTotal(0);
     } finally {
       setLoading(false);
     }
-  }, [query, sort]);
+  }, [query, sort, categoryId, typeId, subtypeId, minPrice, maxPrice, stock]);
 
   useEffect(() => {
     loadProducts();
@@ -90,13 +113,14 @@ export default function SearchClient() {
     <div className="max-w-7xl mx-auto px-6 py-10">
       <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
         <h1 className="text-2xl font-bold">
-          Results for “{query}”
+          Results for "{query}"
         </h1>
 
         <select
-          className="border rounded px-3 py-2"
+          className="border rounded px-3 py-2 bg-white"
           value={sort}
           onChange={(e) => handleSortChange(e.target.value)}
+          disabled={loading}
         >
           <option value="relevance">Relevance</option>
           <option value="newest">Newest First</option>
@@ -105,36 +129,45 @@ export default function SearchClient() {
         </select>
       </div>
 
-      <div className="grid grid-cols-12 gap-6">
-        <aside className="hidden md:block md:col-span-3">
-          {categoryId && <FiltersSidebar categoryId={categoryId} />}
-        </aside>
+      <main>
+        {loading && (
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            <p className="text-gray-500 mt-4">Searching...</p>
+          </div>
+        )}
+        
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            {error}
+          </div>
+        )}
 
-        <main className="col-span-12 md:col-span-9">
-          {loading && <p className="text-gray-500">Loading…</p>}
-          {error && <p className="text-red-500">{error}</p>}
+        {!loading && !error && (
+          <>
+            <p className="text-gray-600 mb-4">
+              {total} {total === 1 ? 'Product' : 'Products'} Found
+            </p>
 
-          {!loading && !error && (
-            <>
-              <p className="text-gray-600 mb-4">
-                {total} Products Found
-              </p>
-
-              {products.length === 0 ? (
-                <p className="text-gray-500">
-                  No products found for “{query}”
+            {products.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-500 text-lg">
+                  No products found for "{query}"
                 </p>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {products.map((p) => (
-                    <ProductCard key={p.id} product={p} />
-                  ))}
-                </div>
-              )}
-            </>
-          )}
-        </main>
-      </div>
+                <p className="text-gray-400 text-sm mt-2">
+                  Try different keywords or filters
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+                {products.map((p) => (
+                  <ProductCard key={p.id} product={p} />
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </main>
     </div>
   );
 }
