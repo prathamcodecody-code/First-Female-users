@@ -19,7 +19,7 @@ export default function CheckoutReviewPage() {
   }, []);
 
   useEffect(() => {
-    api.get("/cart").then((res) => {
+    api.get("cart").then((res) => {
       setCartItems(res.data.items || []);
     });
   }, []);
@@ -47,7 +47,7 @@ const totalAmount = cartItems.reduce((sum, item) => {
 
       // ================= COD =================
       if (paymentMethod === "COD") {
-        const res = await api.post("/orders", { address });
+        const res = await api.post("orders", { address });
         router.push(`/checkout/success?orderId=${res.data.orderId}`);
         return;
       }
@@ -60,12 +60,12 @@ const totalAmount = cartItems.reduce((sum, item) => {
       }
 
       // 1️⃣ Create order (PENDING)
-      const orderRes = await api.post("/orders", { address });
+      const orderRes = await api.post("orders", { address });
       const orderId = orderRes.data.orderId;
 
       // 2️⃣ Create Razorpay order
       const rpRes = await api.post(
-        "/payments/razorpay/create-order",
+        "payments/razorpay/create-order",
         { orderId }
       );
 
@@ -76,7 +76,7 @@ const totalAmount = cartItems.reduce((sum, item) => {
         name: "FirstFemale",
         order_id: rpRes.data.razorpayOrderId,
         handler: async (response: any) => {
-          await api.post("/payments/razorpay/verify", response);
+          await api.post("payments/razorpay/verify", response);
           router.push(`/checkout/success?orderId=${orderId}`);
         },
         theme: { color: "#ec4899" },
@@ -175,3 +175,4 @@ const totalAmount = cartItems.reduce((sum, item) => {
     </div>
   );
 }
+
