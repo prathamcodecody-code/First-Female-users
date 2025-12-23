@@ -13,7 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-brandCream/30">
+      <body className="bg-gray-50 text-gray-900">
         <AuthProvider>
           <WishlistProvider>
             <CheckoutProvider>
@@ -22,7 +22,7 @@ export default function RootLayout({
 
               <Navbar />
 
-              <main className="min-h-[calc(100vh-160px)]">
+              <main className="min-h-[calc(100vh-160px)] bg-white shadow-sm">
                 {children}
               </main>
 
