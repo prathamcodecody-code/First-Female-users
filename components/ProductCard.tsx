@@ -48,7 +48,16 @@ export default function ProductCard({ product }: { product?: Product }) {
   // -----------------------------------
 
   return (
-    <div className="relative bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition">
+    <div
+  className="
+    relative bg-white rounded-xl overflow-hidden
+    border border-gray-100
+    shadow-[0_4px_12px_rgba(0,0,0,0.06)]
+    hover:shadow-[0_10px_30px_rgba(0,0,0,0.12)]
+    transition-all duration-300 ease-out
+    hover:-translate-y-1
+  "
+>
 
       {/* ❤️ Wishlist */}
       <AddToWishlistButton productId={product.id} />
