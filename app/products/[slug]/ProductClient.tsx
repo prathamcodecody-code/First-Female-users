@@ -80,16 +80,17 @@ savings = Math.round(savings);
 
         <div className="space-y-8">
 
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold">
-              {product.title}
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">
-              {product.category?.name}
-            </p>
-          </div>
+          <div className="space-y-0.5">
+  <h1 className="text-3xl md:text-4xl font-bold leading-tight">
+    {product.title}
+  </h1>
+  <p className="text-sm text-gray-500">
+    {product.category?.name}
+  </p>
+</div>
+
 {/* PRICE WITH GLOBAL 60% DISCOUNT */}
-<div className="space-y-1">
+<div className="space-y-0.5 mt-2">
   <div className="flex items-center gap-3">
     {/* FINAL PRICE */}
     <span className="text-4xl font-bold text-brandPink">
