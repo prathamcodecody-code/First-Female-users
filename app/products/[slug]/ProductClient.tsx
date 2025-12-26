@@ -179,41 +179,42 @@ savings = Math.round(savings);
       </div>
 
       {/* REVIEWS */}
-      <div className="mt-16">
-        <h2 className="text-xl font-bold mb-4">
-          Customer Reviews
-          {avg && (
-            <span className="ml-2 text-sm text-gray-500">
-              ({avg} ★)
-            </span>
+      {reviews.length > 0 && (
+  <div className="mt-16">
+    <h2 className="text-xl font-bold mb-4">
+      Customer Reviews
+      {avg && (
+        <span className="ml-2 text-sm text-gray-500">
+          ({avg} ★)
+        </span>
+      )}
+    </h2>
+
+    <div className="space-y-4">
+      {reviews.map((r) => (
+        <div
+          key={r.id}
+          className="bg-white p-4 rounded-xl shadow-sm"
+        >
+          <p className="font-semibold">
+            {r.user?.name || "User"}
+          </p>
+
+          <p className="text-sm text-gray-500">
+            {"★".repeat(r.rating)}
+          </p>
+
+          {r.comment && (
+            <p className="mt-2 text-gray-700">
+              {r.comment}
+            </p>
           )}
-        </h2>
-
-        {reviews.length === 0 && (
-          <p className="text-gray-500">No reviews yet.</p>
-        )}
-
-        <div className="space-y-4">
-          {reviews.map((r) => (
-            <div
-              key={r.id}
-              className="bg-white p-4 rounded-xl shadow-sm"
-            >
-              <p className="font-semibold">
-                {r.user?.name || "User"}
-              </p>
-              <p className="text-sm text-gray-500">
-                {"★".repeat(r.rating)}
-              </p>
-              {r.comment && (
-                <p className="mt-2 text-gray-700">
-                  {r.comment}
-                </p>
-              )}
-            </div>
-          ))}
         </div>
-      </div>
+      ))}
+    </div>
+  </div>
+)}
+
 
       {/* RECOMMENDATIONS */}
       <div className="mt-24">
