@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/app/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 interface AuthModalProps {
   show: boolean;
@@ -11,6 +12,7 @@ interface AuthModalProps {
 
 export default function AuthModal({ show, onClose }: AuthModalProps) {
   const { loginWithToken } = useAuth();
+  const router = useRouter();
 
   const [step, setStep] = useState<"phone" | "otp">("phone");
   const [phone, setPhone] = useState("");
@@ -18,7 +20,7 @@ export default function AuthModal({ show, onClose }: AuthModalProps) {
   const [loading, setLoading] = useState(false);
 
   const sendOtp = async () => {
-    if (!phone) return;
+    if (!phone || phone.length < 10) return;
 
     try {
       setLoading(true);
@@ -30,48 +32,56 @@ export default function AuthModal({ show, onClose }: AuthModalProps) {
   };
 
   const verifyOtp = async () => {
-  try {
-    setLoading(true);
-    const res = await api.post("/auth/verify-otp", { phone, otp });
+    try {
+      setLoading(true);
 
-    // Save token
-    loginWithToken(res.data.token);
+      const res = await api.post("/auth/verify-otp", {
+        phone,
+        otp,
+      });
 
-    // 🔴 ADD THIS LINE (CRITICAL)
-    window.dispatchEvent(new Event("auth-changed"));
+      loginWithToken(res.data.token);
 
-    onClose();
-  } finally {
-    setLoading(false);
-  }
-};
+      // ✅ Proper refresh flow
+      router.refresh(); // Next.js refresh
+      window.location.reload(); // hard fallback
 
+      onClose();
+    } catch (err) {
+      alert("Invalid OTP. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!show) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white p-8 w-[380px] rounded-xl shadow-lg relative">
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
+      <div className="bg-white w-[380px] rounded-xl shadow-xl p-6 relative animate-fadeIn">
 
-        {/* Close Button */}
+        {/* Close */}
         <button
           onClick={onClose}
-          className="absolute right-3 top-3 text-gray-500 hover:text-black"
+          className="absolute right-4 top-4 text-gray-400 hover:text-black"
         >
           ✕
         </button>
 
-        {/* PHONE STEP */}
+        {/* STEP 1: PHONE */}
         {step === "phone" && (
           <>
-            <h2 className="text-2xl font-semibold mb-4">
+            <h2 className="text-xl font-semibold mb-2">
               Login / Sign Up
             </h2>
+            <p className="text-sm text-gray-500 mb-4">
+              Enter your mobile number to continue
+            </p>
 
             <input
-              type="text"
-              placeholder="Enter Mobile Number"
-              className="w-full border p-3 rounded mb-4"
+              type="tel"
+              placeholder="Enter mobile number"
+              className="w-full border rounded-lg px-4 py-3 mb-4 focus:ring-2 focus:ring-brandPink outline-none"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
             />
@@ -79,34 +89,45 @@ export default function AuthModal({ show, onClose }: AuthModalProps) {
             <button
               onClick={sendOtp}
               disabled={loading}
-              className="bg-brandPink text-white w-full py-3 rounded-lg font-semibold"
+              className="w-full bg-brandPink text-white py-3 rounded-lg font-semibold hover:opacity-90 disabled:opacity-60"
             >
               {loading ? "Sending OTP..." : "Send OTP"}
             </button>
           </>
         )}
 
-        {/* OTP STEP */}
+        {/* STEP 2: OTP */}
         {step === "otp" && (
           <>
-            <h2 className="text-2xl font-semibold mb-4">
-              Enter OTP
+            <h2 className="text-xl font-semibold mb-2">
+              Verify OTP
             </h2>
+            <p className="text-sm text-gray-500 mb-4">
+              Enter the 6-digit OTP sent to <b>{phone}</b>
+            </p>
 
             <input
               type="text"
-              placeholder="6-digit OTP"
-              className="w-full border p-3 rounded mb-4"
+              maxLength={6}
+              placeholder="Enter OTP"
+              className="w-full border rounded-lg px-4 py-3 mb-4 tracking-widest text-center focus:ring-2 focus:ring-brandPink outline-none"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
             />
 
             <button
               onClick={verifyOtp}
-              disabled={loading}
-              className="bg-brandPink text-white w-full py-3 rounded-lg font-semibold"
+              disabled={loading || otp.length < 4}
+              className="w-full bg-brandPink text-white py-3 rounded-lg font-semibold hover:opacity-90 disabled:opacity-60"
             >
               {loading ? "Verifying..." : "Verify & Login"}
+            </button>
+
+            <button
+              onClick={() => setStep("phone")}
+              className="w-full mt-3 text-sm text-gray-500 hover:underline"
+            >
+              Change phone number
             </button>
           </>
         )}
