@@ -24,12 +24,10 @@ export default function CheckoutReviewPage() {
     });
   }, []);
 
-const totalAmount = cartItems.reduce((sum, item) => {
-  const unitPrice =
-    item.size?.price ?? item.product.price;
-
-  return sum + unitPrice * item.quantity;
-}, 0);
+const totalAmount = cartItems.reduce(
+  (sum, item) => sum + Number(item.price) * item.quantity,
+  0
+);
 
   const loadRazorpay = () =>
     new Promise((resolve) => {
@@ -120,8 +118,7 @@ const totalAmount = cartItems.reduce((sum, item) => {
   <h2 className="text-lg font-semibold mb-4">Items</h2>
 
   {cartItems.map((item) => {
-    const unitPrice =
-      item.size?.price ?? item.product.price;
+    const unitPrice = Number(item.price);
 
     return (
       <div
