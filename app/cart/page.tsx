@@ -113,9 +113,14 @@ export default function CartPage() {
 
   /* ---------------- TOTAL ---------------- */
   const total = items.reduce(
-    (sum, i) => sum + i.product.price * i.quantity,
-    0
-  );
+  (sum, i) => sum + Number(i.price) * i.quantity,
+  0
+);
+
+const totalItems = items.reduce(
+  (sum, i) => sum + i.quantity,
+  0
+);
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-10">
@@ -148,7 +153,7 @@ export default function CartPage() {
 
           <div className="flex justify-between mb-2">
             <span>Total Items</span>
-            <span>{items.length}</span>
+            <span>{totalItems}</span>
           </div>
 
           <div className="flex justify-between font-bold mb-4">
