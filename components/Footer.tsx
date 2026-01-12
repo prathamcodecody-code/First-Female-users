@@ -126,7 +126,7 @@ export default function Footer() {
           <p className="text-sm leading-relaxed text-gray-600">
             VARSE FASHION PRIVATE LIMITED<br />
             H.No. 60, 3rd floor, KH No. 251/200, Shri Aurobindo Marg, New Delhi 110017<br />
-            Customer Support: +91-XXXXXXXXXX
+            Customer Support: +91-9654764464
           </p>
         </div>
 
@@ -155,4 +155,5 @@ export default function Footer() {
     </>
   );
 }
+
 
