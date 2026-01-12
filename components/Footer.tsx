@@ -124,8 +124,8 @@ export default function Footer() {
             Registered Office Address
           </h4>
           <p className="text-sm leading-relaxed text-gray-600">
-            FirstFemale Fashion Pvt. Ltd.<br />
-            Main Market, Delhi NCR, India – 110001<br />
+            VARSE FASHION PRIVATE LIMITED<br />
+            H.No. 60, 3rd floor, KH No. 251/200, Shri Aurobindo Marg, New Delhi 110017<br />
             Customer Support: +91-XXXXXXXXXX
           </p>
         </div>
@@ -155,3 +155,4 @@ export default function Footer() {
     </>
   );
 }
+
