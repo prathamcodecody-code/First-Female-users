@@ -8,6 +8,7 @@ import CategoryGrid from "@/components/CategoryGrid";
 import HomeFilter from "@/components/Home/HomeFilter";
 import { api } from "@/lib/api";
 import ProductCard from "@/components/ProductCard";
+import DiscountSection from "@/components/DiscountDeals";
 
 type Product = {
   id: number;
@@ -71,11 +72,13 @@ export default function HomePage() {
         <>
           <CategoryGrid />
           <NewArrivals />
+          <DiscountSection />
           <TrendingNow />
         </>
       )}
 <CategoryGrid />
           <NewArrivals />
+          <DiscountSection />
           <TrendingNow />
     </div>
   );
