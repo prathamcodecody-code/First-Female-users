@@ -69,6 +69,12 @@ export default function ProductCard({ product }: { product?: Product }) {
 
           {/* AD / BRAND TAG */}
           
+          {hasDiscount && (
+    <span className="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded-md font-semibold shadow">
+      {discountText}
+    </span>
+  )}
+          
           {/* RATING */}
           {product.rating && (
             <div className="absolute bottom-2 left-2 bg-white text-xs px-2 py-1 rounded flex items-center gap-1 shadow">
