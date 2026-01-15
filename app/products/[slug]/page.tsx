@@ -10,21 +10,26 @@ type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
+function extractIdFromSlug(slug: string): number | null {
+  const id = slug.split("-").pop();
+  if (!id) return null;
+
+  const num = Number(id);
+  return Number.isInteger(num) ? num : null;
+}
 // Helper function to fetch product data
 async function getProduct(slug: string) {
-  const apiUrl = `https://api.firstfemale.in/products/${slug}`;
-  
-  const res = await fetch(apiUrl, { 
+  const id = extractIdFromSlug(slug);
+  if (!id) return null;
+
+  const apiUrl = `https://api.firstfemale.in/products/${id}`;
+
+  const res = await fetch(apiUrl, {
     cache: "no-store",
-    headers: {
-      'Content-Type': 'application/json',
-    }
+    headers: { "Content-Type": "application/json" },
   });
 
-  if (!res.ok) {
-    return null;
-  }
-
+  if (!res.ok) return null;
   return res.json();
 }
 
