@@ -92,19 +92,19 @@ export default function HomePage() {
       <TrendingNow />
 
       {/* --- ALWAYS SHOW THE FILTER HERE --- */}
-      <section className="mt-24 border-t pt-16">
-  <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-10">
+     <section className="mt-24 border-t pt-16 overflow-x-hidden">
+  <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8">
 
-    {/* FILTER – SINGLE INSTANCE */}
-    <aside className="sticky top-24 h-fit">
+    {/* FILTER */}
+    <aside className="sticky top-30 h-fit max-w-full overflow-x-hidden">
       <HomeFilter onFilter={applyFilters} />
     </aside>
 
     {/* RESULTS */}
-    <div>
+    <div className="w-full max-w-full overflow-x-hidden">
       {hasAppliedFilter ? (
         filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 w-full max-w-full">
             {filteredProducts.map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}
@@ -123,6 +123,7 @@ export default function HomePage() {
 
   </div>
 </section>
+
 
     </div>
   );
