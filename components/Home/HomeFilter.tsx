@@ -16,6 +16,8 @@ export default function HomeFilter({
     sort: "",
   });
 
+  const [openMobile, setOpenMobile] = useState(false);
+
   useEffect(() => {
     api
       .get("/categories")
@@ -28,32 +30,28 @@ export default function HomeFilter({
       setFilter({ ...filter, minPrice: "", maxPrice: "" });
       return;
     }
-
     const [min, max] = value.split("-");
-    setFilter({
-      ...filter,
-      minPrice: min || "",
-      maxPrice: max || "",
-    });
+    setFilter({ ...filter, minPrice: min, maxPrice: max });
   };
 
-  return (
+  const apply = () => {
+    onFilter?.(filter);
+    setOpenMobile(false);
+  };
+
+  const reset = () => {
+    setFilter({ categoryId: "", minPrice: "", maxPrice: "", sort: "" });
+  };
+
+  /* ================= DESKTOP FILTER ================= */
+  const FilterBody = (
     <div className="bg-white border border-gray-100 p-6 rounded-xl shadow-sm w-full max-w-[280px]">
-      
-      {/* HEADER */}
-      <div className="mb-8 border-b border-gray-50 pb-4">
-        <h2 className="text-xl font-bold text-gray-800 tracking-tight">
-          Filter
-        </h2>
-        <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest">
-          Refine your search
-        </p>
+      <div className="mb-6">
+        <h2 className="text-lg font-bold">Filter</h2>
+        <p className="text-xs text-gray-400 uppercase">Refine search</p>
       </div>
 
-      {/* FILTER CONTROLS - Changed from grid-cols-4 to flex-col */}
-      <div className="flex flex-col gap-8">
-
-        {/* CATEGORY */}
+      <div className="flex flex-col gap-6">
         <FilterSelect
           label="Category"
           value={filter.categoryId}
@@ -63,13 +61,10 @@ export default function HomeFilter({
         >
           <option value="">All Categories</option>
           {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
+            <option key={c.id} value={c.id}>{c.name}</option>
           ))}
         </FilterSelect>
 
-        {/* PRICE */}
         <FilterSelect label="Price Range" onChange={(e) => handlePrice(e.target.value)}>
           <option value="">Any Price</option>
           <option value="0-500">Under ₹500</option>
@@ -78,58 +73,66 @@ export default function HomeFilter({
           <option value="2000-5000">₹2000 – ₹5000</option>
         </FilterSelect>
 
-        {/* SORT */}
         <FilterSelect
           label="Sort By"
           value={filter.sort}
-          onChange={(e) =>
-            setFilter({ ...filter, sort: e.target.value })
-          }
+          onChange={(e) => setFilter({ ...filter, sort: e.target.value })}
         >
           <option value="">Recommended</option>
           <option value="newest">Newest</option>
-          <option value="low_to_high">Price: Low to High</option>
-          <option value="high_to_low">Price: High to Low</option>
+          <option value="low_to_high">Low → High</option>
+          <option value="high_to_low">High → Low</option>
         </FilterSelect>
 
-          <button
-  onClick={() => onFilter?.(filter)}
-  className="mt-6 w-full bg-brandPink text-white py-2 rounded-md font-semibold"
->
-  Apply Filters
-</button>
-
-        {/* RESET BUTTON */}
         <button
-          onClick={() =>
-            setFilter({
-              categoryId: "",
-              minPrice: "",
-              maxPrice: "",
-              sort: "",
-            })
-          }
-          className="
-            mt-4
-            w-full
-            h-[45px]
-            rounded-lg
-            bg-gray-50
-            text-xs font-bold uppercase tracking-widest
-            text-gray-500
-            hover:bg-brandPink
-            hover:text-white
-            transition-all duration-300
-          "
+          onClick={apply}
+          className="w-full bg-brandPink text-white py-2 rounded-md font-semibold"
+        >
+          Apply Filters
+        </button>
+
+        <button
+          onClick={reset}
+          className="w-full text-xs uppercase tracking-widest text-gray-500"
         >
           Reset All
         </button>
       </div>
     </div>
   );
+
+  return (
+    <>
+      {/* DESKTOP */}
+      <div className="hidden lg:block">{FilterBody}</div>
+
+      {/* MOBILE FILTER BUTTON */}
+      <div className="lg:hidden sticky bottom-0 bg-white border-t z-30 px-4 py-3">
+        <button
+          onClick={() => setOpenMobile(true)}
+          className="w-full bg-black text-white py-3 rounded-full font-semibold"
+        >
+          Filter Products
+        </button>
+      </div>
+
+      {/* MOBILE BOTTOM SHEET */}
+      {openMobile && (
+        <div className="fixed inset-0 z-50 bg-black/40">
+          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-6 max-h-[85vh] overflow-y-auto">
+            <div className="flex justify-between mb-4">
+              <h2 className="font-bold">Filter</h2>
+              <button onClick={() => setOpenMobile(false)}>✕</button>
+            </div>
+            {FilterBody}
+          </div>
+        </div>
+      )}
+    </>
+  );
 }
 
-/* ---------------- UI HELPER ---------------- */
+/* ---------- UI Helper ---------- */
 
 function FilterSelect({
   label,
@@ -139,40 +142,16 @@ function FilterSelect({
   label: string;
 }) {
   return (
-    <div className="flex flex-col gap-2">
-      <label className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+    <div className="flex flex-col gap-1">
+      <label className="text-xs uppercase font-semibold text-gray-400">
         {label}
       </label>
-      <div className="relative">
-        <select
-          {...props}
-          className="
-            w-full
-            h-[45px]
-            appearance-none
-            rounded-lg
-            border border-gray-100
-            bg-gray-50/50
-            px-4
-            text-sm font-medium
-            text-gray-700
-            focus:outline-none
-            focus:ring-2 focus:ring-brandPink/10
-            focus:border-brandPink
-            hover:border-gray-300
-            transition-all
-            cursor-pointer
-          "
-        >
-          {children}
-        </select>
-        {/* Custom Arrow Icon */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
-          <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-            <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
-          </svg>
-        </div>
-      </div>
+      <select
+        {...props}
+        className="h-11 rounded-lg border px-3 text-sm bg-gray-50"
+      >
+        {children}
+      </select>
     </div>
   );
 }
