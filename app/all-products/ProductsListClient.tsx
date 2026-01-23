@@ -89,8 +89,8 @@ export default function ProductsListClient() {
         </select>
       </div>
 
-      <div className="grid grid-cols-12 gap-8">
-        <div className="col-span-12 md:col-span-3">
+      <div className="grid grid-cols-12 gap-6">
+        <div className="hidden md:block md:col-span-3">
           {categoryId && <FiltersSidebar categoryId={categoryId} />}
         </div>
 
@@ -101,7 +101,7 @@ export default function ProductsListClient() {
             </p>
           )}
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 overflow-hidden">
             {products.map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}
