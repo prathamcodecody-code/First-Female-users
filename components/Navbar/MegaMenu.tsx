@@ -68,18 +68,19 @@ export default function MegaMenu({ categoryId }: { categoryId: number }) {
                 {/* SUBTYPES */}
                 <div className="space-y-1">
                   {Array.isArray(t.subtypes) && t.subtypes.length > 0 ? (
-                    t.subtypes.map((s) => (
-                      <Link
-                        key={s.id}
-                        href={`/all-products?categoryId=${categoryId}&subtypeId=${s.id}`}
-                        className="block text-sm text-brandPink/80 hover:text-brandPink"
-                      >
-                        {s.name}
-                      </Link>
-                    ))
-                  ) : (
-                    <p className="text-xs text-gray-400">Coming soon</p>
-                  )}
+  t.subtypes.slice(0, 5).map((s) => (
+    <Link
+      key={s.id}
+      href={`/all-products?categoryId=${categoryId}&subtypeId=${s.id}`}
+      className="block text-sm text-brandPink/80 hover:text-brandPink"
+    >
+      {s.name}
+    </Link>
+  ))
+) : (
+  <p className="text-xs text-gray-400">Coming soon</p>
+)}
+
                 </div>
 
               </div>
