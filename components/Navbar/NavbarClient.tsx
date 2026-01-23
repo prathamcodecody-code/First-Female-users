@@ -9,50 +9,84 @@ import {
 import { AiOutlineHeart, AiOutlineClose } from "react-icons/ai";
 import { FiSearch, FiUser } from "react-icons/fi";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import AnimatedLogo from "./AnimatedLogo";
+import { api } from "@/lib/api";
 
-export default function NavbarClient({ navItems }: { navItems: any[] }) {
+export default function NavbarClient({ navItems = [] }: { navItems: any[] }) {
+  const router = useRouter();
+
   const [showMore, setShowMore] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<any | null>(null);
+  const [subTypes, setSubTypes] = useState<any[]>([]);
+  const [search, setSearch] = useState("");
 
-  // ✅ Correct slicing
   const visibleItems = navItems.slice(0, 4);
   const remainingItems = navItems.slice(4);
 
+  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && search.trim()) {
+      router.push(`/all-products?search=${encodeURIComponent(search)}`);
+      setSearch("");
+    }
+  };
+
+  const openCategory = async (category: any) => {
+    setActiveCategory(category);
+    try {
+      const res = await api.get(`/product-types?categoryId=${category.id}`);
+      setSubTypes(Array.isArray(res.data) ? res.data : []);
+    } catch {
+      setSubTypes([]);
+    }
+  };
+
   return (
     <div className="w-full bg-white border-b">
-      {/* DESKTOP NAVBAR */}
+
+      {/* ================= MOBILE TOP BAR ================= */}
+      <div className="flex lg:hidden items-center justify-between h-16 px-4">
+        <button onClick={() => setIsMobileMenuOpen(true)}>
+          <HiOutlineMenuAlt1 size={26} />
+        </button>
+
+        <Link href="/" className="absolute left-1/2 -translate-x-1/2">
+          <AnimatedLogo />
+        </Link>
+
+        <div className="flex items-center gap-4">
+          <Link href="/wishlist"><AiOutlineHeart size={22} /></Link>
+          <Link href="/cart"><HiOutlineShoppingBag size={22} /></Link>
+        </div>
+      </div>
+
+      {/* ================= DESKTOP NAVBAR ================= */}
       <div className="hidden lg:flex items-center h-20 px-10">
 
-        {/* LOGO */}
-        <div className="flex-shrink-0">
-          <Link href="/">
-            <AnimatedLogo />
-          </Link>
-        </div>
+        <Link href="/" className="flex-shrink-0">
+          <AnimatedLogo />
+        </Link>
 
-        {/* NAV ITEMS */}
         <div className="flex-1 flex justify-center">
           <div className="flex items-center gap-x-10">
-
             {visibleItems.map((item) => (
               <Link
                 key={item.id}
                 href={`/all-products?typeId=${item.id}`}
-                className="text-[12px] font-bold uppercase tracking-[0.15em] text-gray-800 hover:text-brandPink transition"
+                className="text-[12px] font-bold uppercase tracking-[0.15em] hover:text-brandPink"
               >
                 {item.name}
               </Link>
             ))}
 
-            {/* MORE */}
             {remainingItems.length > 0 && (
               <div
                 className="relative"
                 onMouseEnter={() => setShowMore(true)}
                 onMouseLeave={() => setShowMore(false)}
               >
-                <button className="flex items-center gap-1 text-[12px] font-bold uppercase tracking-[0.15em] text-gray-800 hover:text-brandPink">
+                <button className="flex items-center gap-1 text-[12px] font-bold uppercase">
                   More <HiChevronDown size={14} />
                 </button>
 
@@ -62,7 +96,7 @@ export default function NavbarClient({ navItems }: { navItems: any[] }) {
                       <Link
                         key={item.id}
                         href={`/all-products?typeId=${item.id}`}
-                        className="block px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-gray-700 hover:bg-gray-50 hover:text-brandPink transition"
+                        className="block px-6 py-3 text-[11px] font-bold uppercase hover:bg-gray-50"
                       >
                         {item.name}
                       </Link>
@@ -74,60 +108,82 @@ export default function NavbarClient({ navItems }: { navItems: any[] }) {
           </div>
         </div>
 
-        {/* RIGHT ICONS */}
         <div className="flex items-center gap-6">
           <div className="flex items-center bg-gray-50 rounded-full px-4 py-2">
-            <FiSearch size={16} className="text-gray-400" />
+            <FiSearch size={16} />
             <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={handleSearch}
               placeholder="Search trends..."
               className="bg-transparent outline-none text-xs ml-2 w-40"
             />
           </div>
 
-          <Link href="/profile">
-            <FiUser size={22} />
-          </Link>
-
-          <Link href="/wishlist" className="relative">
-            <AiOutlineHeart size={24} />
-            <span className="absolute -top-1 -right-1 bg-brandPink text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
-              0
-            </span>
-          </Link>
-
-          <Link href="/cart" className="flex flex-col items-center">
-            <HiOutlineShoppingBag size={24} />
-            <span className="text-[9px] font-bold uppercase">Bag</span>
-          </Link>
+          <Link href="/profile"><FiUser size={22} /></Link>
+          <Link href="/wishlist"><AiOutlineHeart size={24} /></Link>
+          <Link href="/cart"><HiOutlineShoppingBag size={24} /></Link>
         </div>
       </div>
 
-      {/* MOBILE MENU (unchanged logic) */}
+      {/* ================= MOBILE SLIDE MENU ================= */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm">
-          <div className="w-[300px] h-full bg-white shadow-2xl flex flex-col">
-            <div className="p-6 border-b flex justify-between items-center">
-              <span className="font-bold tracking-[0.2em] text-xs uppercase">
-                Menu
-              </span>
-              <AiOutlineClose
-                size={22}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="cursor-pointer"
-              />
-            </div>
+        <div className="fixed inset-0 z-[100] bg-white">
+          <div className="flex items-center justify-between px-6 py-4 border-b">
+            {activeCategory ? (
+              <button onClick={() => setActiveCategory(null)}>← Back</button>
+            ) : (
+              <span className="uppercase text-xs font-bold">Menu</span>
+            )}
+            <AiOutlineClose
+              size={22}
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                setActiveCategory(null);
+              }}
+            />
+          </div>
 
-            <div className="flex-1 overflow-y-auto">
-              {navItems.map((item) => (
-                <Link
-                  key={item.id}
-                  href={`/all-products?typeId=${item.id}`}
-                  className="block px-8 py-4 text-sm font-bold uppercase tracking-widest text-gray-800 border-b hover:bg-brandPinkLight hover:text-brandPink"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {item.name}
-                </Link>
-              ))}
+          <div className="flex h-full">
+            <div className="w-full px-6 py-6 space-y-4 overflow-y-auto">
+              {!activeCategory &&
+                navItems.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => openCategory(item)}
+                    className="w-full text-left uppercase font-semibold flex justify-between"
+                  >
+                    {item.name} →
+                  </button>
+                ))}
+
+              {activeCategory && (
+                <>
+                  <Link
+                    href={`/all-products?categoryId=${activeCategory.id}`}
+                    className="block font-semibold"
+                  >
+                    Shop All {activeCategory.name}
+                  </Link>
+
+                  {subTypes.map((type) => (
+                    <div key={type.id}>
+                      <Link href={`/all-products?typeId=${type.id}`}>
+                        {type.name}
+                      </Link>
+                      {type.subtypes?.map((s: any) => (
+                        <Link
+                          key={s.id}
+                          href={`/all-products?subtypeId=${s.id}`}
+                          className="block pl-4 text-sm text-gray-500"
+                        >
+                          {s.name}
+                        </Link>
+                      ))}
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
           </div>
         </div>
