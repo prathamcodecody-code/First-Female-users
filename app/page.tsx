@@ -72,12 +72,12 @@ export default function HomePage() {
     setFilteredProducts(res.data.products || []);
   };
 
-  return (
+  return  (
     <div className="max-w-7xl mx-auto px-6 py-10">
       <CategoryStrip />
       <HeroCarousel />
       
-      {/* 🔥 FEATURED SECTIONS (AUTO-HIDE EMPTY) */}
+      {/* FEATURED SECTIONS */}
       {sections.map((section) => (
         <FeaturedProductSection
           key={section.id}
@@ -91,42 +91,38 @@ export default function HomePage() {
       <DiscountSection />
       <TrendingNow />
 
-      {/* FILTER + RESULTS SECTION */}
-{hasAppliedFilter && (
-  <section className="mt-24">
-    <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-8">
+      {/* --- ALWAYS SHOW THE FILTER HERE --- */}
+      <section className="mt-24 border-t pt-16">
+  <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-10">
 
-      {/* LEFT: FILTER (DESKTOP) */}
-      <aside className="hidden lg:block sticky top-24 h-fit">
-        <HomeFilter onFilter={applyFilters} />
-      </aside>
+    {/* FILTER – SINGLE INSTANCE */}
+    <aside className="sticky top-24 h-fit">
+      <HomeFilter onFilter={applyFilters} />
+    </aside>
 
-      {/* RIGHT: PRODUCTS */}
-      <div>
-        <h2 className="text-xl font-semibold mb-8">
-          Filter Results
-        </h2>
-
-        {filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    {/* RESULTS */}
+    <div>
+      {hasAppliedFilter ? (
+        filteredProducts.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
             {filteredProducts.map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}
           </div>
         ) : (
-          <p className="text-gray-500">
+          <p className="text-gray-500 py-20 text-center border rounded-sm">
             No products found matching your filters.
           </p>
-        )}
-      </div>
+        )
+      ) : (
+        <div className="py-20 text-center border border-dashed rounded-sm text-gray-400">
+          Select filters to see products.
+        </div>
+      )}
     </div>
 
-    {/* MOBILE FILTER (TOP) */}
-    <div className="block lg:hidden mt-10">
-      <HomeFilter onFilter={applyFilters} />
-    </div>
-  </section>
-)}
+  </div>
+</section>
 
     </div>
   );
