@@ -4,13 +4,13 @@ import { useEffect, useState } from "react";
 import ProductCard from "./ProductCard";
 import { api } from "@/lib/api";
 
-interface Product {
+type Product = {
   id: number;
   title: string;
-  img1: string | null;
+  img1?: string | null;
   price: number;
   slug: string;
-}
+};
 
 export default function TrendingNow() {
   const [items, setItems] = useState<Product[]>([]);
@@ -18,12 +18,14 @@ export default function TrendingNow() {
 
   useEffect(() => {
     api
-      .get("/products/home/trending?limit=4")
+      .get("/products", {
+        params: {
+          trending: "true",
+          limit: 4,
+        },
+      })
       .then((res) => {
-        const data = res.data;
-
-        const list = Array.isArray(data) ? data : [];
-        setItems(list);
+        setItems(res.data?.products || []);
       })
       .catch(() => setItems([]))
       .finally(() => setLoading(false));
@@ -31,32 +33,43 @@ export default function TrendingNow() {
 
   if (loading) {
     return (
-      <section className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-6">
-        {[1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className="h-72 bg-gray-100 animate-pulse rounded-xl"
-          />
-        ))}
+      <section className="mt-24">
+        <div className="flex items-end justify-between mb-8">
+          <h2 className="text-2xl md:text-3xl font-light uppercase tracking-ultra text-brandBlack">
+            Trending Now
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="aspect-[3/4] bg-gray-100 animate-pulse rounded-sm"
+            />
+          ))}
+        </div>
       </section>
     );
   }
 
-  if (items.length === 0) {
-    return (
-      <p className="text-center text-gray-500 mt-20">
-        No trending products available.
-      </p>
-    );
-  }
+  if (items.length === 0) return null;
 
   return (
-    <section className="mt-20">
-      <h2 className="text-2xl font-bold mb-6">Trending Now</h2>
+    <section className="mt-24">
+      <div className="flex items-end justify-between mb-8">
+        <div>
+          <h2 className="text-2xl md:text-3xl font-light uppercase tracking-ultra text-brandBlack">
+            Trending Now
+          </h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Styles everyone’s loving right now
+          </p>
+        </div>
+      </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-        {items.map((p) => (
-          <ProductCard key={p.id} product={p} />
+        {items.map((product) => (
+          <ProductCard key={product.id} product={product} />
         ))}
       </div>
     </section>
