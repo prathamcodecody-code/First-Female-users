@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   HiOutlineMenuAlt1,
   HiOutlineShoppingBag,
@@ -10,11 +10,21 @@ import { FiSearch, FiUser } from "react-icons/fi";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AnimatedLogo from "./AnimatedLogo";
+import { api } from "@/lib/api";
 
-export default function NavbarClient({ navItems }: { navItems: any[] }) {
+export default function NavbarClient() {
   const router = useRouter();
+  const [navItems, setNavItems] = useState<any[]>([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [search, setSearch] = useState("");
+
+  /* ✅ FETCH NAV ITEMS CLIENT-SIDE */
+  useEffect(() => {
+    api
+      .get("/product-types", { params: { categoryId: 1 } })
+      .then((res) => setNavItems(res.data || []))
+      .catch(() => setNavItems([]));
+  }, []);
 
   const visibleItems = navItems.slice(0, 5);
   const remainingItems = navItems.slice(5);
@@ -25,6 +35,9 @@ export default function NavbarClient({ navItems }: { navItems: any[] }) {
     router.push(`/all-products?search=${encodeURIComponent(search)}`);
     setSearch("");
   };
+
+  /* Prevent empty navbar flash */
+  if (navItems.length === 0) return null;
 
   return (
     <div className="w-full">
@@ -40,24 +53,18 @@ export default function NavbarClient({ navItems }: { navItems: any[] }) {
         </Link>
 
         <div className="flex items-center gap-4">
-          <Link href="/wishlist">
-            <AiOutlineHeart size={22} />
-          </Link>
-          <Link href="/cart">
-            <HiOutlineShoppingBag size={22} />
-          </Link>
+          <Link href="/wishlist"><AiOutlineHeart size={22} /></Link>
+          <Link href="/cart"><HiOutlineShoppingBag size={22} /></Link>
         </div>
       </div>
 
       {/* ================= DESKTOP NAVBAR ================= */}
       <div className="hidden lg:flex items-center h-20 gap-10">
 
-        {/* LOGO */}
         <Link href="/" className="shrink-0">
           <AnimatedLogo />
         </Link>
 
-        {/* NAV ITEMS */}
         <div className="flex-1 flex justify-center gap-10">
           {visibleItems.map((item) => (
             <Link
@@ -89,8 +96,10 @@ export default function NavbarClient({ navItems }: { navItems: any[] }) {
           )}
         </div>
 
-        {/* SEARCH + ICONS */}
-        <form onSubmit={handleSearch} className="flex items-center bg-gray-50 rounded-full px-4 py-2">
+        <form
+          onSubmit={handleSearch}
+          className="flex items-center bg-gray-50 rounded-full px-4 py-2"
+        >
           <FiSearch size={16} />
           <input
             value={search}
@@ -108,7 +117,6 @@ export default function NavbarClient({ navItems }: { navItems: any[] }) {
       {/* ================= MOBILE MENU ================= */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-50 bg-white">
-
           <div className="flex justify-between items-center px-6 py-4 border-b">
             <span className="font-bold uppercase text-xs">Menu</span>
             <AiOutlineClose size={22} onClick={() => setIsMobileMenuOpen(false)} />
