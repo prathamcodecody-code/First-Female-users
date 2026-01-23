@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import AddToCartButton from "@/components/cart/AddToCartButton";
+import Image from "next/image";
 import AddToWishlistButton from "@/components/wishlist/AddToWishlistButton";
 
 type Product = {
@@ -26,8 +26,6 @@ export default function ProductCard({ product }: { product?: Product }) {
     : "/placeholder.png";
 
   const productUrl = `/products/${product.slug}-${product.id}`;
-
-
   const price = Number(product.price) || 0;
 
   // ---------- DISCOUNT LOGIC ----------
@@ -48,85 +46,72 @@ export default function ProductCard({ product }: { product?: Product }) {
   // -----------------------------------
 
   return (
-    <div
-  className="
-    relative bg-white rounded-xl overflow-hidden
-    border border-gray-100
-    shadow-[0_4px_12px_rgba(0,0,0,0.06)]
-    hover:shadow-[0_10px_30px_rgba(0,0,0,0.12)]
-    transition-all duration-300 ease-out
-    hover:-translate-y-1
-  "
->
-
-      {/* ❤️ Wishlist */}
-      <AddToWishlistButton productId={product.id} />
+    <div className="group relative bg-white transition-all duration-300 border-none">
+      {/* ❤️ Wishlist - Positioned for a clean look */}
+      <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <AddToWishlistButton productId={product.id} />
+      </div>
 
       <Link href={productUrl} className="block">
-
-        {/* IMAGE */}
-        <div className="relative w-full h-64 bg-gray-100 overflow-hidden">
-
-          {/* AD / BRAND TAG */}
-          
-          {hasDiscount && (
-    <span className="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded-md font-semibold shadow">
-      {discountText}
-    </span>
-  )}
-          
-          {/* RATING */}
-          {product.rating && (
-            <div className="absolute bottom-2 left-2 bg-white text-xs px-2 py-1 rounded flex items-center gap-1 shadow">
-              <span className="font-semibold">{product.rating}</span>
-              <span className="text-green-600">★</span>
-              {product.reviewCount && (
-                <span className="text-gray-500">| {product.reviewCount}</span>
-              )}
-            </div>
-          )}
-
+        {/* IMAGE CONTAINER - 3:4 Aspect Ratio, fits images without cropping */}
+        <div className="relative w-full aspect-[3/4] bg-[#F9F9F9] overflow-hidden rounded-sm">
           <img
             src={imageUrl}
             alt={product.title}
-            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+            className="w-full h-full object-contain p-2 transition-transform duration-700 ease-out group-hover:scale-110"
           />
+          
+          {/* Subtle Discount Badge */}
+          {hasDiscount && (
+            <span className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm text-[10px] px-2 py-1 font-bold uppercase tracking-wider text-red-600 shadow-sm">
+              {discountText}
+            </span>
+          )}
+
+          {/* RATING OVERLAY */}
+          {product.rating && (
+            <div className="absolute top-3 left-3 bg-white/80 backdrop-blur-sm text-[10px] px-1.5 py-0.5 rounded-sm flex items-center gap-1 shadow-sm font-bold">
+              <span>{product.rating}</span>
+              <span className="text-yellow-500 text-xs">★</span>
+            </div>
+          )}
         </div>
 
-        {/* INFO */}
-        <div className="p-3 space-y-1">
+        {/* INFO SECTION */}
+        <div className="mt-3 space-y-1 px-1">
+          {/* Brand/Category (Optional logic) */}
+          <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">
+            {product.brand || "New Arrival"}
+          </p>
 
-        
-          {/* TITLE */}
-          <h3 className="text-sm text-gray-700 line-clamp-2">
+          {/* TITLE - Clean and concise */}
+          <h3 className="text-[13px] font-medium text-gray-800 leading-tight group-hover:text-brandPink transition-colors line-clamp-1">
             {product.title}
           </h3>
 
-          {/* PRICE */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-gray-900">
-              ₹{finalPrice}
+          {/* PRICE SECTION */}
+          <div className="flex items-center gap-2 pt-1">
+            <span className="text-sm font-bold text-gray-900">
+              ₹{finalPrice.toLocaleString()}
             </span>
 
             {hasDiscount && (
-              <>
-                <span className="text-xs text-gray-400 line-through">
-                  ₹{price}
-                </span>
-                <span className="text-xs text-orange-600 font-semibold">
-                  ({discountText})
-                </span>
-              </>
+              <span className="text-xs text-gray-400 line-through">
+                ₹{price.toLocaleString()}
+              </span>
             )}
           </div>
 
+          {/* SIGNATURE "BEST PRICE" HIGHLIGHT */}
+          {hasDiscount && (
+             <div className="inline-block bg-[#FDEFF4] px-2 py-1 mt-1 rounded-sm border border-[#FADDE9]">
+                <p className="text-[9px] font-extrabold text-brandPink uppercase tracking-tighter">
+                   Best Price: ₹{finalPrice.toLocaleString()}
+                </p>
+             </div>
+          )}
         </div>
       </Link>
-
-      {/* ADD TO CART */}
-      <div className="px-3 pb-3">
-       
-      </div>
     </div>
   );
 }
