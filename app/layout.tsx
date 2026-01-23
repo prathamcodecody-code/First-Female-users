@@ -5,29 +5,29 @@ import { AuthProvider } from "@/app/context/AuthContext";
 import { WishlistProvider } from "@/app/context/WishlistContext";
 import { CheckoutProvider } from "@/app/context/CheckoutContext";
 import { Toaster } from "react-hot-toast";
+import WhatsAppFloating from "@/components/ui/WhatsAppFloating";
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+// layout.tsx refinement
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="bg-gray-50 text-gray-900">
+      {/* Changed bg-gray-50 to bg-white for that clean boutique feel */}
+      <body className="bg-white text-brandBlack antialiased">
         <AuthProvider>
           <WishlistProvider>
             <CheckoutProvider>
-
-              <Toaster position="top-right" />
-
+              <Toaster position="bottom-center" /> {/* Miss Mosa uses bottom notifications often */}
+              
               <Navbar />
 
-              <main className="min-h-[calc(100vh-160px)] bg-white shadow-sm">
+              {/* Removed shadow-sm and bg-white from main. 
+                  Let the page components handle their own spacing. */}
+              <main className="min-h-screen">
                 {children}
+                <WhatsAppFloating />
               </main>
 
               <Footer />
-
             </CheckoutProvider>
           </WishlistProvider>
         </AuthProvider>
