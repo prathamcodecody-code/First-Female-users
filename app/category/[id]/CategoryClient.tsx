@@ -30,7 +30,7 @@ export default function CategoryClient({
 
       <div className="grid grid-cols-12 gap-8">
         <aside className="col-span-3">
-          {categoryId && <FiltersSidebar categoryId={categoryId} />}
+          {categoryId && <FiltersSidebar />}
         </aside>
 
         <main className="col-span-9">
@@ -40,3 +40,4 @@ export default function CategoryClient({
     </div>
   );
 }
+
