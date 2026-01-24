@@ -1,66 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import HeroCarousel from "@/components/HeroCarousel";
+import CategoryGrid from "@/components/CategoryGrid";
 import TrendingNow from "@/components/TrendingSection";
 import NewArrivals from "@/components/NewArrivals";
-import HomeFilter from "@/components/Home/HomeFilter";
+import HomeFilter from "@/components/Home/HomeFilter"; // This can be your new Sidebar/Meesho filter
 import ProductCard from "@/components/ProductCard";
-import DiscountSection from "@/components/DiscountDeals";
-import CategoryStrip from "@/components/Home/CategoryStrip";
-import MainCharacterSection from "@/components/Home/MainCharacterSection";
-import FeaturedProductSection from "@/components/Home/ShopByCategory";
+import TopCategories from "@/components/TopCategories";
 import { api } from "@/lib/api";
-
-type Product = {
-  id: number;
-  title: string;
-  slug: string;
-  price: number;
-  finalPrice: number;
-  img1: string;
-};
-
-const HOMEPAGE_SUBTYPES = [
-  { id: 11, name: "Dresses" },
-  { id: 15, name: "Jumpsuits" },
-  { id: 16, name: "Playsuits" },
-];
+import { useState } from "react";
+import { Product } from "@/lib/product";
 
 export default function HomePage() {
-  const [sections, setSections] = useState<
-    { id: number; name: string; products: Product[] }[]
-  >([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [hasFiltered, setHasFiltered] = useState(false);
 
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
-  const [hasAppliedFilter, setHasAppliedFilter] = useState(false);
-
-  // 🔥 Fetch featured sections (ONLY populated ones)
-  useEffect(() => {
-    Promise.all(
-      HOMEPAGE_SUBTYPES.map((sub) =>
-        api.get("/products", {
-          params: { subtypeId: sub.id, limit: 4 },
-        })
-      )
-    ).then((responses) => {
-      const validSections = responses
-        .map((res, i) => ({
-          ...HOMEPAGE_SUBTYPES[i],
-          products: res.data.products || [],
-        }))
-        .filter((section) => section.products.length > 0);
-
-      setSections(validSections);
-    });
-  }, []);
-
-  // Filters
   const applyFilters = async (filter: any) => {
-    setHasAppliedFilter(true);
-
     const params: any = {};
+
     if (filter.categoryId) params.categoryId = filter.categoryId;
+    if (filter.productTypes?.length > 0) params.productTypes = filter.productTypes.join(',');
+    
     if (filter.price) {
       const [min, max] = filter.price.split("-");
       params.minPrice = min;
@@ -68,63 +28,76 @@ export default function HomePage() {
     }
     if (filter.sort) params.sort = filter.sort;
 
-    const res = await api.get("/products", { params });
-    setFilteredProducts(res.data.products || []);
+    try {
+      const res = await api.get("/products", { params });
+      setProducts(res.data?.products || []);
+      setHasFiltered(true);
+    } catch (error) {
+      console.error("Filter error", error);
+    }
   };
 
-  return  (
-    <div className="max-w-7xl mx-auto px-6 py-10">
-      <CategoryStrip />
-      <HeroCarousel />
-      
-      {/* FEATURED SECTIONS */}
-      {sections.map((section) => (
-        <FeaturedProductSection
-          key={section.id}
-          title={`Shop ${section.name}`}
-          exploreLink={`/all-products?subtypeId=${section.id}`}
-          products={section.products}
-        />
-      ))}
-      <MainCharacterSection />
-      <NewArrivals />
-      <DiscountSection />
-      <TrendingNow />
+  return (
+    <div className="w-full bg-white">
+      {/* 1. HERO SECTION */}
+      <section className="relative w-full overflow-hidden mb-16">
+        <HeroCarousel />
+      </section>
 
-      {/* --- ALWAYS SHOW THE FILTER HERE --- */}
-     <section className="mt-24 border-t pt-16 overflow-x-hidden">
-  <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8">
+      {/* 2. CATEGORY QUICK LINKS */}
+      <section className="max-w-7xl mx-auto px-6 mt-20">
+        <CategoryGrid />
+      </section>
 
-    {/* FILTER */}
-    <aside className="sticky top-30 h-fit max-w-full overflow-x-hidden">
-      <HomeFilter onFilter={applyFilters} />
-    </aside>
-
-    {/* RESULTS */}
-    <div className="w-full max-w-full overflow-x-hidden">
-      {hasAppliedFilter ? (
-        filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 w-full max-w-full">
-            {filteredProducts.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-500 py-20 text-center border rounded-sm">
-            No products found matching your filters.
-          </p>
-        )
-      ) : (
-        <div className="py-20 text-center border border-dashed rounded-sm text-gray-400">
-          Select filters to see products.
+      {/* 3. TOP CATEGORIES (White version) */}
+      <section className="mt-15 py-10 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <TopCategories />
         </div>
-      )}
-    </div>
+      </section>
 
-  </div>
-</section>
+      {/* 4. TRENDING SECTION (Always visible) */}
+      <section className="mt-20 py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <TrendingNow />
+        </div>
+      </section>
 
+      {/* 5. NEW ARRIVALS (Always visible) */}
+      <section className="max-w-7xl mx-auto px-6 mt-20 mb-20">
+        <NewArrivals />
+      </section>
 
+      <hr className="border-t border-gray-100" />
+
+      {/* 6. FINAL SECTION: BROWSE ALL / FILTER (Meesho Style) */}
+      <section className="max-w-7xl mx-auto px-6 mt-20 mb-32">
+        <h2 className="text-3xl font-bold text-gray-900 mb-8">Products For You</h2>
+        
+        <div className="flex flex-col md:flex-row gap-8">
+          {/* Sidebar Filter */}
+          <aside className="w-full md:w-1/4">
+            <HomeFilter onFilter={applyFilters} />
+          </aside>
+
+          {/* Results Grid */}
+          <main className="w-full md:w-3/4">
+            {products.length > 0 ? (
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+                {products.map((p) => (
+                  <ProductCard key={p.id} product={p} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-20 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+                <p className="text-gray-500">
+                  {hasFiltered ? "No products match your filters." : "Use the filters to find specific products."}
+                </p>
+              </div>
+            )}
+          </main>
+        </div>
+      </section>
     </div>
   );
 }
