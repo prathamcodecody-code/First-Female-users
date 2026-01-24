@@ -3,77 +3,74 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import Link from "next/link";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
-type FilterSidebarProps = {
-  categoryId?: string | number;
-};
-
-export default function FiltersSidebar({ categoryId }: FilterSidebarProps) {
+export default function FiltersSidebar() {
   const [types, setTypes] = useState<any[]>([]);
-  const [open, setOpen] = useState(false);
+  const searchParams = useSearchParams();
 
-  const cid = categoryId ? String(categoryId) : null;
+  const activeTypeId = searchParams.get("typeId");
+  const activeSubtypeId = searchParams.get("subtypeId");
+
+  // helper: preserve existing params
+  const buildLink = (extra: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    Object.entries(extra).forEach(([key, value]) => {
+      if (!value) params.delete(key);
+      else params.set(key, value);
+    });
+
+    return `/all-products?${params.toString()}`;
+  };
 
   useEffect(() => {
-    if (!cid) {
-    setTypes([]);
-    return;
-  }
-
     api
-      .get(`/product-types?categoryId=${cid}`)
+      .get("/product-types?includeSubtypes=true")
       .then((res) => setTypes(Array.isArray(res.data) ? res.data : []))
       .catch(() => setTypes([]));
-  }, [cid]);
-
-  // 🚨 DO NOT RENDER SIDEBAR UNTIL ID EXISTS
-  if (!cid) return null;
+  }, []);
 
   return (
-    <aside className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 md:sticky md:top-24">
-      
-      {/* MOBILE HEADER */}
-      <button
-        onClick={() => setOpen(!open)}
-        className="md:hidden w-full flex items-center justify-between px-6 py-4 font-bold text-brandPink"
-      >
-        Filters
-        {open ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-      </button>
+    <div className="w-full space-y-10 md:sticky md:top-24">
 
-      {/* CONTENT */}
-      <div className={`px-6 pb-6 ${open ? "block" : "hidden"} md:block`}>
-        
-        {/* PRODUCT TYPES */}
-        <div className="mb-8">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase mb-4">
-            Product Type
-          </h3>
+      {/* PRODUCT TYPES */}
+      <section>
+        <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-6">
+          Product Type
+        </h3>
 
+        <div className="space-y-4">
           {types.map((t) => (
-            <div key={t.id}>
+            <div key={t.id} className="space-y-2">
               <Link
-                href={
-    cid
-      ? `/all-products?categoryId=${cid}&typeId=${t.id}`
-      : `/all-products?typeId=${t.id}`
-  }
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:bg-pink-50"
-                onClick={() => setOpen(false)}
+                href={buildLink({
+                  typeId: String(t.id),
+                  subtypeId: null, // reset subtype when type changes
+                })}
+                className={`text-[13px] font-semibold transition-colors ${
+                  activeTypeId === String(t.id)
+                    ? "text-brandPink"
+                    : "text-gray-800 hover:text-brandPink"
+                }`}
               >
-                <span className="w-2 h-2 rounded-full bg-brandPink" />
                 {t.name}
               </Link>
 
               {t.subtypes?.length > 0 && (
-                <div className="ml-6 mt-2 space-y-2 border-l pl-4">
+                <div className="ml-4 flex flex-col gap-2 border-l border-gray-100 pl-4 py-1">
                   {t.subtypes.map((s: any) => (
                     <Link
                       key={s.id}
-                      href={`/all-products?categoryId=${cid}&subtypeId=${s.id}`}
-                      className="block text-xs hover:text-brandPink"
-                      onClick={() => setOpen(false)}
+                      href={buildLink({
+                        subtypeId: String(s.id),
+                        typeId: null, // subtype takes priority
+                      })}
+                      className={`text-[12px] transition-colors ${
+                        activeSubtypeId === String(s.id)
+                          ? "text-brandPink font-bold"
+                          : "text-gray-500 hover:text-brandPink"
+                      }`}
                     >
                       {s.name}
                     </Link>
@@ -83,43 +80,57 @@ export default function FiltersSidebar({ categoryId }: FilterSidebarProps) {
             </div>
           ))}
         </div>
+      </section>
 
-        <Divider />
+      <div className="h-px bg-gray-100 w-full" />
 
-        {/* PRICE */}
-        <div className="mb-8">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase mb-4">
-            Price Range
-          </h3>
+      {/* PRICE RANGE */}
+      <section>
+        <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-6">
+          Price Range
+        </h3>
 
-          <PriceLink href={`/all-products?categoryId=${cid}&maxPrice=500`} label="Under ₹500" />
-          <PriceLink href={`/all-products?categoryId=${cid}&minPrice=500&maxPrice=1000`} label="₹500 – ₹1000" />
-          <PriceLink href={`/all-products?categoryId=${cid}&minPrice=1000`} label="₹1000 & Above" />
+        <div className="flex flex-col gap-3">
+          <PriceLink href={buildLink({ maxPrice: "499", minPrice: null })} label="Under ₹500" />
+          <PriceLink href={buildLink({ minPrice: "500", maxPrice: "999" })} label="₹500 – ₹999" />
+          <PriceLink href={buildLink({ minPrice: "1000", maxPrice: "1499" })} label="₹1000 – ₹1499" />
+          <PriceLink href={buildLink({ minPrice: "1500", maxPrice: "2999" })} label="₹1500 – ₹2999" />
+          <PriceLink href={buildLink({ minPrice: "3000", maxPrice: null })} label="₹3000 & Above" />
         </div>
+      </section>
 
-        <Divider />
+      <div className="h-px bg-gray-100 w-full" />
 
-        {/* AVAILABILITY */}
-        <Link
-          href={`/all-products?categoryId=${cid}&stock=in`}
-          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-pink-50"
-        >
-          <span className="w-2 h-2 rounded-full bg-green-500" />
+      {/* AVAILABILITY */}
+      <Link
+        href={buildLink({ stock: "in" })}
+        className="flex items-center gap-3 group"
+      >
+        <div className="w-4 h-4 rounded-full border border-gray-200 flex items-center justify-center group-hover:border-brandPink transition-all">
+          <div className="w-2 h-2 rounded-full bg-green-500" />
+        </div>
+        <span className="text-[13px] font-semibold uppercase tracking-wider">
           In Stock
-        </Link>
-      </div>
-    </aside>
-  );
-}
+        </span>
+      </Link>
 
-/* Helpers */
-function Divider() {
-  return <div className="border-t my-6" />;
+      {/* RESET */}
+      <Link
+        href="/all-products"
+        className="block w-full py-3 text-center border border-gray-800 text-[10px] font-bold uppercase tracking-widest hover:bg-black hover:text-white transition-all mt-6"
+      >
+        Clear Filters
+      </Link>
+    </div>
+  );
 }
 
 function PriceLink({ href, label }: { href: string; label: string }) {
   return (
-    <Link href={href} className="block px-3 py-2 rounded-lg text-sm hover:bg-pink-50">
+    <Link
+      href={href}
+      className="text-[13px] text-gray-600 hover:text-brandPink transition-colors"
+    >
       {label}
     </Link>
   );
