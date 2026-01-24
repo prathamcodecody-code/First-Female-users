@@ -85,20 +85,26 @@ const [validSubtypes, setValidSubtypes] = useState<Subtype[]>([]);
 
     // Filters
     const applyFilters = async (filter: any) => {
-      setHasAppliedFilter(true);
+      
+  setHasAppliedFilter(true);
 
-      const params: any = {};
-      if (filter.categoryId) params.categoryId = filter.categoryId;
-      if (filter.price) {
-        const [min, max] = filter.price.split("-");
-        params.minPrice = min;
-        params.maxPrice = max;
-      }
-      if (filter.sort) params.sort = filter.sort;
+  const params: any = {};
 
-      const res = await api.get("/products", { params });
-      setFilteredProducts(res.data.products || []);
-    };
+  // ✅ FIX: use typeId (not categoryId)
+  if (filter.typeId) params.typeId = filter.typeId;
+
+  // ✅ FIX: price filters
+  if (filter.minPrice) params.minPrice = filter.minPrice;
+  if (filter.maxPrice) params.maxPrice = filter.maxPrice;
+
+  // ✅ sorting
+  if (filter.sort) params.sort = filter.sort;
+
+  const res = await api.get("/products", { params });
+  console.log("FILTER PARAMS →", params);
+  setFilteredProducts(res.data.products || []);
+};
+
 
 
     return  (
