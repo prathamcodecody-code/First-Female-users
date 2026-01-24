@@ -8,22 +8,22 @@ export default function HomeFilter({
 }: {
   onFilter?: (f: any) => void;
 }) {
-  const [categories, setCategories] = useState<any[]>([]);
-  const [filter, setFilter] = useState({
-    categoryId: "",
-    minPrice: "",
-    maxPrice: "",
-    sort: "",
-  });
+  const [types, setTypes] = useState<any[]>([]);
+const [filter, setFilter] = useState({
+  typeId: "",
+  minPrice: "",
+  maxPrice: "",
+  sort: "",
+});
 
   const [openMobile, setOpenMobile] = useState(false);
 
   useEffect(() => {
-    api
-      .get("/categories")
-      .then((res) => setCategories(Array.isArray(res.data) ? res.data : []))
-      .catch(() => setCategories([]));
-  }, []);
+  api
+    .get("/product-types")
+    .then((res) => setTypes(Array.isArray(res.data) ? res.data : []))
+    .catch(() => setTypes([]));
+}, []);
 
   const handlePrice = (value: string) => {
     if (!value) {
@@ -40,7 +40,7 @@ export default function HomeFilter({
   };
 
   const reset = () => {
-    setFilter({ categoryId: "", minPrice: "", maxPrice: "", sort: "" });
+    setFilter({ typeId: "", minPrice: "", maxPrice: "", sort: "" });
   };
 
   /* ================= DESKTOP FILTER ================= */
@@ -53,25 +53,36 @@ export default function HomeFilter({
 
       <div className="flex flex-col gap-6">
         <FilterSelect
-          label="Category"
-          value={filter.categoryId}
-          onChange={(e) =>
-            setFilter({ ...filter, categoryId: e.target.value })
-          }
-        >
-          <option value="">All Categories</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
-          ))}
-        </FilterSelect>
+  label="Product Type"
+  value={filter.typeId}
+  onChange={(e) =>
+    setFilter({ ...filter, typeId: e.target.value })
+  }
+>
+  <option value="">All Types</option>
+  {types.map((t) => (
+    <option key={t.id} value={t.id}>{t.name}</option>
+  ))}
+</FilterSelect>
 
-        <FilterSelect label="Price Range" onChange={(e) => handlePrice(e.target.value)}>
-          <option value="">Any Price</option>
-          <option value="0-500">Under ₹500</option>
-          <option value="500-1000">₹500 – ₹1000</option>
-          <option value="1000-2000">₹1000 – ₹2000</option>
-          <option value="2000-5000">₹2000 – ₹5000</option>
-        </FilterSelect>
+        <FilterSelect
+  label="Price Range"
+  value={
+    filter.minPrice && filter.maxPrice
+      ? `${filter.minPrice}-${filter.maxPrice}`
+      : ""
+  }
+  onChange={(e) => handlePrice(e.target.value)}
+>
+  <option value="0-499">Under ₹500</option>
+<option value="500-999">₹500 – ₹999</option>
+<option value="1000-1499">₹1000 – ₹1499</option>
+<option value="1500-1999">₹1500 – ₹1999</option>
+<option value="2000-2999">₹2000 – ₹2999</option>
+<option value="3000-4999">₹3000 – ₹4999</option>
+<option value="5000-100000">₹5000+</option>
+</FilterSelect>
+
 
         <FilterSelect
           label="Sort By"
