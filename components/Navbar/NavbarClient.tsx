@@ -35,7 +35,7 @@ export default function NavbarClient() {
   if (navItems.length === 0) return null;
 
   return (
-    <div className="w-full overflow-hidden"> {/* Added overflow-hidden to prevent horizontal scroll */}
+    <div className="w-full "> {/* Added overflow-hidden to prevent horizontal scroll */}
 
       {/* ================= MOBILE TOP BAR ================= */}
       <div className="relative flex lg:hidden items-center justify-between h-16 px-4">
