@@ -10,6 +10,17 @@ import { api } from "@/lib/api";
 
 export default function ProductClient({ product }: any) {
 
+const SIZE_ORDER: Record<string, number> = {
+  XS: 1,
+  S: 2,
+  M: 3,
+  L: 4,
+  XL: 5,
+  XXL: 6,
+  "3XL": 7,
+  "Free Size": 8,
+};
+
   console.log("Product data:", product);
   console.log("Images:", {
     img1: product.img1,
@@ -18,7 +29,12 @@ export default function ProductClient({ product }: any) {
     img4: product.img4
   });
 
-  const sizes = Array.isArray(product.sizes) ? product.sizes : [];
+  const sizes = Array.isArray(product.sizes)
+  ? [...product.sizes].sort(
+      (a, b) =>
+        (SIZE_ORDER[a.size] ?? 999) - (SIZE_ORDER[b.size] ?? 999)
+    )
+  : [];
 
   const [reviews, setReviews] = useState<any[]>([]);
   const [avg, setAvg] = useState<number | null>(null);
