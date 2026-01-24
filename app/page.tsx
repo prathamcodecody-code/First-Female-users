@@ -21,6 +21,18 @@
     img1: string;
   };
 
+  type Subtype = {
+  id: number;
+  name: string;
+  image: string;
+};
+
+const SUBTYPE_IMAGES: Record<number, string> = {
+  11: "/categories/Dress.png",
+  15: "/categories/JumpSuits.png",
+  16: "/categories/PlaySuits.png",
+};
+
   const HOMEPAGE_SUBTYPES = [
     { id: 11, name: "Dresses" },
     { id: 15, name: "Jumpsuits" },
@@ -34,26 +46,42 @@
 
     const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
     const [hasAppliedFilter, setHasAppliedFilter] = useState(false);
+    
+const [validSubtypes, setValidSubtypes] = useState<Subtype[]>([]);
 
     // 🔥 Fetch featured sections (ONLY populated ones)
     useEffect(() => {
-      Promise.all(
-        HOMEPAGE_SUBTYPES.map((sub) =>
-          api.get("/products", {
-            params: { subtypeId: sub.id, limit: 4 },
-          })
-        )
-      ).then((responses) => {
-        const validSections = responses
-          .map((res, i) => ({
-            ...HOMEPAGE_SUBTYPES[i],
-            products: res.data.products || [],
-          }))
-          .filter((section) => section.products.length > 0);
+  async function loadHomepageSubtypes() {
+    const responses = await Promise.all(
+      HOMEPAGE_SUBTYPES.map((sub) =>
+        api.get("/products", {
+          params: { subtypeId: sub.id, limit: 4 },
+        })
+      )
+    );
 
-        setSections(validSections);
-      });
-    }, []);
+    const populated = responses
+      .map((res, i) => ({
+        ...HOMEPAGE_SUBTYPES[i],
+        products: res.data.products || [],
+      }))
+      .filter((s) => s.products.length > 0);
+
+    // Featured sections
+    setSections(populated);
+
+    // Category strip (subtypes)
+    setValidSubtypes(
+      populated.map((s) => ({
+        id: s.id,
+        name: s.name,
+        image: SUBTYPE_IMAGES[s.id] || "/placeholder.png",
+      }))
+    );
+  }
+
+  loadHomepageSubtypes();
+}, []);
 
     // Filters
     const applyFilters = async (filter: any) => {
@@ -72,9 +100,10 @@
       setFilteredProducts(res.data.products || []);
     };
 
+
     return  (
       <div className="max-w-7xl mx-auto px-6 py-10">
-        <CategoryStrip />
+        <CategoryStrip categories={validSubtypes} />
         <HeroCarousel />
         
         {/* FEATURED SECTIONS */}
