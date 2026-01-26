@@ -7,6 +7,7 @@ import Link from "next/link";
 import AuthModal from "../auth/AuthModal";
 import { useRouter } from "next/navigation";
 import CartItemCard from "@/components/cart/CartItemCard";
+import { FiShoppingBag, FiLock, FiArrowLeft } from "react-icons/fi";
 
 export default function CartPage() {
   const { user } = useAuth();
@@ -46,7 +47,6 @@ export default function CartPage() {
     setUpdatingId(id);
     await api.put(`/cart/${id}`, { quantity: qty });
 
-    // ✅ SAFE UPDATE
     setItems((prev) =>
       prev.map((i) =>
         i.id === id ? { ...i, quantity: qty } : i
@@ -59,18 +59,18 @@ export default function CartPage() {
   /* ---------------- AUTH REQUIRED ---------------- */
   if (!user && !loading) {
     return (
-      <div className="max-w-4xl mx-auto py-20 text-center">
-        <h2 className="text-2xl font-bold mb-3">
-          Please sign in to view your cart
-        </h2>
-
+      <div className="min-h-[60vh] flex flex-col items-center justify-center px-4">
+        <FiShoppingBag className="text-gray-200 w-16 h-16 mb-6" />
+        <h2 className="text-3xl font-serif italic text-brandBlack mb-2">Your bag is empty.</h2>
+        <p className="text-gray-500 uppercase tracking-widest text-[10px] mb-8 text-center">
+          Sign in to see the looks you&apos;ve saved
+        </p>
         <button
           onClick={() => setShowAuth(true)}
-          className="mt-4 bg-brandPink text-white px-8 py-3 rounded-lg"
+          className="bg-brandBlack text-white px-12 py-4 rounded-sm font-bold uppercase tracking-widest text-xs hover:bg-brandPink transition-all active:scale-95"
         >
           Sign In
         </button>
-
         <AuthModal show={showAuth} onClose={() => setShowAuth(false)} />
       </div>
     );
@@ -79,17 +79,13 @@ export default function CartPage() {
   /* ---------------- LOADER ---------------- */
   if (loading) {
     return (
-      <div className="max-w-5xl mx-auto px-6 py-10 grid grid-cols-1 md:grid-cols-3 gap-10">
-        <div className="md:col-span-2 space-y-4">
+      <div className="max-w-[1440px] mx-auto px-4 md:px-10 py-20 grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <div className="lg:col-span-8 space-y-6">
           {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-28 bg-gray-100 animate-pulse rounded-lg"
-            />
+            <div key={i} className="h-40 bg-gray-50 animate-pulse rounded-sm" />
           ))}
         </div>
-
-        <div className="h-64 bg-gray-100 animate-pulse rounded-lg" />
+        <div className="lg:col-span-4 h-64 bg-gray-50 animate-pulse rounded-sm" />
       </div>
     );
   }
@@ -97,76 +93,97 @@ export default function CartPage() {
   /* ---------------- EMPTY CART ---------------- */
   if (items.length === 0) {
     return (
-      <div className="text-center py-24">
-        <h2 className="text-2xl font-semibold mb-2">
-          Your Cart is Empty
+      <div className="min-h-[60vh] flex flex-col items-center justify-center px-4">
+        <h2 className="text-3xl font-black uppercase tracking-tighter text-brandBlack mb-4">
+          Bag is empty
         </h2>
+        <p className="text-gray-500 text-sm mb-8 font-medium">Ready to fill it with something iconic?</p>
         <Link
           href="/"
-          className="inline-block mt-4 bg-brandPink text-white px-6 py-3 rounded-lg"
+          className="bg-brandBlack text-white px-10 py-4 rounded-sm font-bold uppercase tracking-widest text-xs hover:bg-brandPink transition-all"
         >
-          Continue Shopping
+          Explore Collection
         </Link>
       </div>
     );
   }
 
-  /* ---------------- TOTAL ---------------- */
-  const total = items.reduce(
-  (sum, i) => sum + Number(i.price) * i.quantity,
-  0
-);
-
-const totalItems = items.reduce(
-  (sum, i) => sum + i.quantity,
-  0
-);
+  /* ---------------- TOTALS ---------------- */
+  const total = items.reduce((sum, i) => sum + Number(i.price) * i.quantity, 0);
+  const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-10">
-      <h1 className="text-3xl font-bold mb-8">Your Cart</h1>
+    <div className="bg-[#FCFAFA] min-h-screen">
+      <div className="max-w-[1440px] mx-auto px-4 md:px-10 py-12 md:py-20">
+        
+        <header className="mb-12">
+          <h1 className="text-4xl font-black uppercase tracking-tighter text-brandBlack italic font-serif">
+            Shopping Bag
+          </h1>
+          <p className="text-xs text-gray-400 uppercase tracking-widest mt-1">
+            {totalItems} {totalItems === 1 ? 'Item' : 'Items'} Ready to haul
+          </p>
+        </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-        {/* LEFT ITEMS */}
-        {/* LEFT ITEMS */}
-<div className="md:col-span-2 space-y-5">
-  {items.map((item) => (
-    <CartItemCard
-      key={item.id}
-      item={item}
-      onIncrease={() =>
-        updateQty(item.id, item.quantity + 1)
-      }
-      onDecrease={() =>
-        updateQty(item.id, item.quantity - 1)
-      }
-      onRemove={() => removeItem(item.id)}
-    />
-  ))}
-</div>
-
-        {/* RIGHT SUMMARY */}
-        <div className="bg-white p-6 rounded-xl shadow sticky top-24 h-fit">
-          <h3 className="text-xl font-semibold mb-4">
-            Price Details
-          </h3>
-
-          <div className="flex justify-between mb-2">
-            <span>Total Items</span>
-            <span>{totalItems}</span>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16">
+          
+          {/* LEFT: CART ITEMS */}
+          <div className="lg:col-span-8 space-y-6">
+            <div className="divide-y divide-gray-100 bg-white border border-gray-100 rounded-sm overflow-hidden">
+              {items.map((item) => (
+                <div key={item.id} className="p-4 md:p-8">
+                  <CartItemCard
+                    item={item}
+                    onIncrease={() => updateQty(item.id, item.quantity + 1)}
+                    onDecrease={() => updateQty(item.id, item.quantity - 1)}
+                    onRemove={() => removeItem(item.id)}
+                  />
+                </div>
+              ))}
+            </div>
+            
+            <Link 
+              href="/" 
+              className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-brandBlack transition-colors"
+            >
+              <FiArrowLeft /> Continue Shopping
+            </Link>
           </div>
 
-          <div className="flex justify-between font-bold mb-4">
-            <span>Total</span>
-            <span>₹{total}</span>
-          </div>
+          {/* RIGHT: ORDER SUMMARY STICKY */}
+          <aside className="lg:col-span-4 h-fit lg:sticky lg:top-24">
+            <div className="bg-white border border-brandPink/10 p-8 rounded-sm shadow-sm">
+              <h3 className="text-[11px] font-black uppercase tracking-[0.2em] border-b border-gray-50 pb-4 mb-8">
+                Order Summary
+              </h3>
 
-          <button
-            onClick={() => router.push("/checkout/address")}
-            className="w-full bg-brandPink text-white py-3 rounded-lg font-semibold"
-          >
-            Proceed to Checkout
-          </button>
+              <div className="space-y-4 mb-10">
+                <div className="flex justify-between text-xs font-bold uppercase tracking-tight">
+                  <span className="text-gray-400">Items Total</span>
+                  <span>₹{total.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-xs font-bold uppercase tracking-tight">
+                  <span className="text-gray-400">Shipping</span>
+                  <span className="text-emerald-600 font-black text-[10px] tracking-widest">CALCULATED AT NEXT STEP</span>
+                </div>
+                <div className="flex justify-between text-xl pt-8 border-t border-gray-50">
+                  <span className="font-black uppercase tracking-tighter">Subtotal</span>
+                  <span className="font-black text-brandPink">₹{total.toLocaleString()}</span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => router.push("/checkout/address")}
+                className="w-full bg-brandBlack text-white py-5 rounded-sm font-black uppercase tracking-[0.3em] text-[12px] shadow-xl hover:bg-brandPink transition-all active:scale-95"
+              >
+                Checkout Securely
+              </button>
+              
+              <div className="mt-8 flex items-center justify-center gap-2 text-[9px] font-black uppercase tracking-widest text-gray-300">
+                 <FiLock size={12} /> SSL Encrypted Checkout
+              </div>
+            </div>
+          </aside>
         </div>
       </div>
     </div>
