@@ -3,14 +3,15 @@
 import { useEffect, useState } from "react";
 import ProductCard from "./ProductCard";
 import { api } from "@/lib/api";
+import NewInEditorialCarousel from "./Home/NewInEditorialCarousel";
 
 /* ---------------- SKELETON CARD ---------------- */
 function ProductSkeleton() {
   return (
-    <div className="bg-white rounded-sm shadow-sm p-3 animate-pulse">
-      <div className="aspect-[3/4] bg-gray-200 rounded-sm mb-4" />
-      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
-      <div className="h-4 bg-gray-200 rounded w-1/2 mb-3" />
+    <div className="bg-white rounded-sm p-3 animate-pulse">
+      <div className="aspect-[3/4] bg-gray-100 rounded-sm mb-4" />
+      <div className="h-3 bg-gray-100 rounded w-3/4 mb-2" />
+      <div className="h-3 bg-gray-100 rounded w-1/2" />
     </div>
   );
 }
@@ -33,7 +34,7 @@ export default function NewArrivals() {
       .get("/products", {
         params: {
           limit: 8,
-          sort: "newest", // explicit intent
+          sort: "newest",
         },
       })
       .then((res) => {
@@ -45,25 +46,29 @@ export default function NewArrivals() {
 
   return (
     <section className="mt-24">
-      {/* HEADER */}
-      <div className="flex items-end justify-between mb-8">
-        <div>
-          <h2 className="text-2xl md:text-3xl font-light text-brandBlack uppercase tracking-ultra">
-            New Arrivals
-          </h2>
-          <p className="text-sm text-gray-500 mt-1">
-            Fresh styles just dropped
-          </p>
-        </div>
+      {/* 1. EDITORIAL CAROUSEL (Top of Section) */}
+      <div className="mb-20">
+        <NewInEditorialCarousel />
       </div>
 
-      {/* GRID */}
+      {/* 2. GRID HEADER */}
+      <div className="flex flex-col items-center mb-12 text-center">
+        <h2 className="text-2xl md:text-3xl font-light text-brandBlack uppercase tracking-[0.3em]">
+          The Latest Drop
+        </h2>
+        <div className="w-12 h-px bg-brandPink mt-4 mb-2 opacity-50" />
+        <p className="text-[11px] uppercase tracking-widest text-gray-400">
+          Shop the full collection below
+        </p>
+      </div>
+
+      {/* 3. PRODUCT GRID */}
       <div
         className="
           grid grid-cols-2 
           sm:grid-cols-3 
           md:grid-cols-4 
-          gap-4 md:gap-6
+          gap-4 md:gap-8
         "
       >
         {loading &&
@@ -72,8 +77,8 @@ export default function NewArrivals() {
           ))}
 
         {!loading && products.length === 0 && (
-          <div className="col-span-full text-center py-16 text-gray-500">
-            No new products available right now.
+          <div className="col-span-full text-center py-16 text-gray-500 font-serif italic">
+            Fresh styles are on their way.
           </div>
         )}
 
