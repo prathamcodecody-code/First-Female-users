@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { useRouter } from "next/navigation";
+import { FiPackage, FiChevronRight, FiClock, FiCheckCircle, FiTruck, FiXCircle } from "react-icons/fi";
 
 export default function OrdersPage() {
   const router = useRouter();
 
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
 
@@ -18,11 +18,9 @@ export default function OrdersPage() {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-
       const res = await api.get("/orders/my", {
         params: { page, limit },
       });
-
       setOrders(res.data.orders || []);
       setPages(res.data.pages || 1);
     } catch {
@@ -36,104 +34,159 @@ export default function OrdersPage() {
     fetchOrders();
   }, [page]);
 
+  function getStatusStyle(status?: string) {
+    switch (status) {
+      case "PENDING":
+        return { 
+          bg: "bg-amber-50", 
+          text: "text-amber-600", 
+          icon: <FiClock />, 
+          border: "border-amber-100" 
+        };
+      case "CONFIRMED":
+        return { 
+          bg: "bg-blue-50", 
+          text: "text-blue-600", 
+          icon: <FiCheckCircle />, 
+          border: "border-blue-100" 
+        };
+      case "SHIPPED":
+        return { 
+          bg: "bg-purple-50", 
+          text: "text-purple-600", 
+          icon: <FiTruck />, 
+          border: "border-purple-100" 
+        };
+      case "DELIVERED":
+        return { 
+          bg: "bg-emerald-50", 
+          text: "text-emerald-600", 
+          icon: <FiCheckCircle />, 
+          border: "border-emerald-100" 
+        };
+      case "CANCELLED":
+        return { 
+          bg: "bg-rose-50", 
+          text: "text-rose-600", 
+          icon: <FiXCircle />, 
+          border: "border-rose-100" 
+        };
+      default:
+        return { 
+          bg: "bg-gray-50", 
+          text: "text-gray-600", 
+          icon: <FiPackage />, 
+          border: "border-gray-100" 
+        };
+    }
+  }
+
   if (loading) {
     return (
-      <p className="text-center py-16 text-gray-500">
-        Loading your orders…
-      </p>
+      <div className="max-w-[1440px] mx-auto px-4 py-32 flex flex-col items-center justify-center space-y-4">
+        <div className="w-8 h-8 border-2 border-brandPink border-t-transparent rounded-full animate-spin" />
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Fetching your drip...</p>
+      </div>
     );
   }
 
-function getStatusClass(status?: string) {
-  switch (status) {
-    case "PENDING":
-      return "bg-yellow-100 text-yellow-700";
-    case "CONFIRMED":
-      return "bg-blue-100 text-blue-700";
-    case "SHIPPED":
-      return "bg-teal-100 text-teal-700";
-    case "DELIVERED":
-      return "bg-green-100 text-green-700";
-    case "CANCELLED":
-      return "bg-red-100 text-red-700";
-    default:
-      return "bg-gray-100 text-gray-700";
-  }
-}
-
-
   return (
-    <div className="max-w-4xl mx-auto px-4 py-10">
-      <h1 className="text-3xl font-bold mb-8">My Orders</h1>
-
-      {orders.length === 0 && (
-        <p className="text-gray-500">You haven’t placed any orders yet.</p>
-      )}
-
-      {/* ORDERS LIST */}
-      <div className="space-y-5">
+    <div className="bg-[#FCFAFA] min-h-screen">
+      <div className="max-w-[1440px] mx-auto px-4 md:px-10 py-12 md:py-20">
         
+        <header className="mb-12">
+          <h1 className="text-4xl font-black uppercase tracking-tighter text-brandBlack italic font-serif">
+            Order History
+          </h1>
+          <p className="text-xs text-gray-400 uppercase tracking-widest mt-2">Track your latest hauls</p>
+        </header>
 
-{orders.map((o) => {
-  const statusClass = getStatusClass(o.status);
+        {orders.length === 0 ? (
+          <div className="bg-white border border-dashed border-gray-200 py-24 text-center rounded-sm">
+            <FiPackage className="mx-auto text-gray-200 w-12 h-12 mb-4" />
+            <h2 className="text-xl font-bold uppercase tracking-tight mb-2">No Orders Yet</h2>
+            <p className="text-gray-400 text-sm mb-8">Ready to start your first main character moment?</p>
+            <button 
+              onClick={() => router.push('/')}
+              className="bg-brandBlack text-white px-10 py-4 text-[10px] font-bold uppercase tracking-widest hover:bg-brandPink transition-all"
+            >
+              Shop New Arrivals
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {orders.map((o) => {
+              const style = getStatusStyle(o.status);
+              return (
+                <div
+                  key={o.id}
+                  onClick={() => router.push(`/orders/${o.id}`)}
+                  className="group bg-white border border-gray-100 p-6 md:p-8 rounded-sm hover:border-brandPink transition-all cursor-pointer shadow-sm"
+                >
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-4">
+                        <div className={`flex items-center gap-2 px-3 py-1 rounded-full border ${style.bg} ${style.text} ${style.border} text-[10px] font-black uppercase tracking-widest`}>
+                          {style.icon} {o.status}
+                        </div>
+                        <span className="text-[10px] text-gray-300 font-bold uppercase tracking-widest">
+                          {new Date(o.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </span>
+                      </div>
 
-  return (
-    <div
-      key={o.id}
-      onClick={() => router.push(`/orders/${o.id}`)}
-      className="bg-white rounded-xl shadow-sm hover:shadow-md transition cursor-pointer p-5"
-    >
-      <div className="flex justify-between items-center">
-        <p className="font-semibold text-gray-900">
-          Order ID: <span className="text-brandPink">{o.id}</span>
-        </p>
+                      <div>
+                        <h3 className="text-lg font-black uppercase tracking-tighter">
+                          Order <span className="text-brandPink">#{o.id}</span>
+                        </h3>
+                        <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest mt-1">
+                          Items Total: ₹{o.finalAmount.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
 
-        <span
-          className={`text-xs px-3 py-1 rounded-full font-semibold ${statusClass}`}
-        >
-          {o.status}
-        </span>
+                    <div className="flex items-center justify-between md:justify-end gap-10 border-t md:border-t-0 pt-4 md:pt-0">
+                      <div className="text-right hidden md:block">
+                         <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest mb-1">Total Paid</p>
+                         <p className="text-xl font-black text-brandBlack">₹{o.finalAmount.toLocaleString()}</p>
+                      </div>
+                      <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-brandPink group-hover:text-white transition-all">
+                        <FiChevronRight size={20} />
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* PAGINATION */}
+        {pages > 1 && (
+          <div className="flex justify-center items-center gap-4 mt-16">
+            <button
+              disabled={page === 1}
+              onClick={() => setPage(page - 1)}
+              className="w-12 h-12 border border-gray-200 flex items-center justify-center rounded-sm hover:bg-brandBlack hover:text-white disabled:opacity-20 transition-all"
+            >
+              <FiChevronRight className="rotate-180" />
+            </button>
+
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-brandBlack mx-4">
+              {page} / {pages}
+            </span>
+
+            <button
+              disabled={page === pages}
+              onClick={() => setPage(page + 1)}
+              className="w-12 h-12 border border-gray-200 flex items-center justify-center rounded-sm hover:bg-brandBlack hover:text-white disabled:opacity-20 transition-all"
+            >
+              <FiChevronRight />
+            </button>
+          </div>
+        )}
       </div>
-
-      <div className="mt-3 flex justify-between items-end">
-        <p className="text-gray-700 font-medium">
-          Total: ₹{o.totalAmount}
-        </p>
-
-        <p className="text-xs text-gray-400">
-          {new Date(o.createdAt).toLocaleString()}
-        </p>
-      </div>
-    </div>
-  );
-})}
-
-      </div>
-
-      {/* PAGINATION */}
-      {pages > 1 && (
-        <div className="flex justify-center items-center gap-6 mt-10">
-          <button
-            disabled={page === 1}
-            onClick={() => setPage(page - 1)}
-            className="px-4 py-2 rounded-lg bg-brandPink text-white disabled:bg-gray-300"
-          >
-            Prev
-          </button>
-
-          <span className="font-semibold text-gray-700">
-            Page {page} of {pages}
-          </span>
-
-          <button
-            disabled={page === pages}
-            onClick={() => setPage(page + 1)}
-            className="px-4 py-2 rounded-lg bg-brandPink text-white disabled:bg-gray-300"
-          >
-            Next
-          </button>
-        </div>
-      )}
     </div>
   );
 }
