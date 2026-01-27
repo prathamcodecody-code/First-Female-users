@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import OrderStatusTimeline from "@/components/OrderTracking";
 import ReviewModal from "@/components/reviews/reviews";
-import { FiPackage, FiMapPin, FiCreditCard, FiArrowLeft } from "react-icons/fi";
+import { FiPackage, FiMapPin, FiCreditCard, FiArrowLeft, FiTag } from "react-icons/fi";
 
 /* ---------- STATUS HELPER ---------- */
 function getOrderStatusClass(status?: string) {
@@ -55,12 +55,6 @@ export default function OrderDetailsPage() {
     return <div className="text-center py-20 text-red-500 font-bold uppercase tracking-widest">Order not found</div>;
   }
 
-  // Calculate items total subtotal
-  const itemsSubtotal = order.items.reduce(
-    (sum: number, i: any) => sum + Number(i.price) * i.quantity,
-    0
-  );
-
   return (
     <div className="max-w-[1440px] mx-auto px-4 md:px-10 py-12 bg-[#FCFAFA]">
       
@@ -93,13 +87,13 @@ export default function OrderDetailsPage() {
 
           {/* TRACKING VISUAL */}
           <div className="bg-white border border-gray-100 p-8 rounded-sm">
-             <OrderStatusTimeline
-  status={order.status}
-  createdAt={order.createdAt}
-  confirmedAt={order.confirmedAt}
-  shippedAt={order.shippedAt}
-  deliveredAt={order.deliveredAt}
-/>
+            <OrderStatusTimeline
+              status={order.status}
+              createdAt={order.createdAt}
+              confirmedAt={order.confirmedAt}
+              shippedAt={order.shippedAt}
+              deliveredAt={order.deliveredAt}
+            />
           </div>
 
           {/* SHIPPING & PAYMENT INFO */}
@@ -128,14 +122,14 @@ export default function OrderDetailsPage() {
                 <div>
                   <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Status</p>
                   <p
-  className={`text-sm font-bold uppercase tracking-tight ${
-    order.paidAt
-      ? "text-emerald-600"
-      : "text-amber-500"
-  }`}
->
-  {order.paidAt ? "Paid" : "Payment Pending"}
-</p>
+                    className={`text-sm font-bold uppercase tracking-tight ${
+                      order.paidAt
+                        ? "text-emerald-600"
+                        : "text-amber-500"
+                    }`}
+                  >
+                    {order.paidAt ? "Paid" : "Payment Pending"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -189,20 +183,64 @@ export default function OrderDetailsPage() {
             <h3 className="text-[11px] font-black uppercase tracking-[0.2em] border-b border-gray-50 pb-4 mb-8">Final Bill</h3>
             
             <div className="space-y-4 mb-10">
+              {/* Items Subtotal */}
               <div className="flex justify-between text-xs font-bold uppercase tracking-tight">
                 <span className="text-gray-400">Items Subtotal</span>
-                <span>₹{itemsSubtotal.toLocaleString()}</span>
+                <span>₹{order.totalAmount.toLocaleString()}</span>
               </div>
+
+              {/* Shipping Charges */}
               <div className="flex justify-between text-xs font-bold uppercase tracking-tight">
                 <span className="text-gray-400">Shipping Charges</span>
                 <span className={order.shippingCharge === 0 ? "text-emerald-600 font-black" : "text-brandBlack"}>
                   {order.shippingCharge === 0 ? "FREE" : `₹${order.shippingCharge.toLocaleString()}`}
                 </span>
               </div>
-              <div className="flex justify-between text-xl pt-8 border-t border-gray-50">
-                <span className="font-black uppercase tracking-tighter">Total Paid</span>
-                <span className="font-black text-brandPink">₹{order.finalAmount.toLocaleString()}</span>
+
+              {/* Coupon Discount - Enhanced Display */}
+              {order.couponDiscount > 0 && (
+                <div className="pt-2 pb-2 border-t border-dashed border-gray-100">
+                  <div className="flex justify-between text-xs font-bold uppercase tracking-tight text-emerald-600">
+                    <span className="flex items-center gap-1.5">
+                      <FiTag className="text-emerald-500" size={12} />
+                      Coupon Discount
+                      {order.couponCode && (
+                        <span className="text-[9px] px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded font-black">
+                          {order.couponCode}
+                        </span>
+                      )}
+                    </span>
+                    <span className="font-black">- ₹{order.couponDiscount.toLocaleString()}</span>
+                  </div>
+                  <p className="text-[9px] text-emerald-600 font-bold mt-1 text-right">
+                    You saved ₹{order.couponDiscount.toLocaleString()}! 🎉
+                  </p>
+                </div>
+              )}
+
+              {/* Total Paid */}
+              <div className="flex justify-between text-xl pt-6 border-t border-gray-50">
+                <span className="font-black uppercase tracking-tighter">
+                  {order.paidAt ? "Total Paid" : "Total Payable"}
+                </span>
+                <span className="font-black text-brandPink">
+                  ₹{order.finalAmount.toLocaleString()}
+                </span>
               </div>
+
+              {/* Savings Summary (if coupon applied) */}
+              {order.couponDiscount > 0 && (
+                <div className="pt-4 text-center">
+                  <div className="bg-emerald-50 border border-emerald-100 rounded-sm px-4 py-3">
+                    <p className="text-[9px] text-emerald-600 font-black uppercase tracking-widest">
+                      💰 Total Savings
+                    </p>
+                    <p className="text-lg font-black text-emerald-700 mt-1">
+                      ₹{order.couponDiscount.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="space-y-3">
@@ -213,7 +251,7 @@ export default function OrderDetailsPage() {
                     await api.put(`/orders/${order.id}/cancel`);
                     fetchOrder();
                   }}
-                  className="w-full py-4 text-[10px] font-black uppercase tracking-widest text-rose-500 border border-rose-100 hover:bg-rose-50 transition-all"
+                  className="w-full py-4 text-[10px] font-black uppercase tracking-widest text-rose-500 border border-rose-100 hover:bg-rose-50 transition-all rounded-sm"
                 >
                   Cancel Order
                 </button>
@@ -225,7 +263,7 @@ export default function OrderDetailsPage() {
                     await api.post(`/orders/${order.id}/reorder`);
                     router.push("/cart");
                   }}
-                  className="w-full bg-brandBlack text-white py-4 text-[10px] font-black uppercase tracking-widest hover:bg-brandPink transition-all"
+                  className="w-full bg-brandBlack text-white py-4 text-[10px] font-black uppercase tracking-widest hover:bg-brandPink transition-all rounded-sm"
                 >
                   Re-Order This Look
                 </button>
