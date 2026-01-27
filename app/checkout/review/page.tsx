@@ -74,44 +74,61 @@ useEffect(() => {
     setLoading(true);
     setError("");
 
+    // ================= COD =================
     if (paymentMethod === "COD") {
       const res = await api.post("/orders", {
-        address: address,  // ✅ Send full address object
-        paymentMethod,
+        address,
+        paymentMethod: "COD",
       });
-      router.push(`/checkout/success?orderId=${res.data.orderId}&type=${paymentMethod}`);
+
+      router.push(
+        `/checkout/success?orderId=${res.data.orderId}&type=COD`
+      );
       return;
     }
 
+    // ================= ONLINE (RAZORPAY) =================
     const loaded = await loadRazorpay();
     if (!loaded) {
       setError("Failed to load Razorpay");
       return;
     }
 
-    const orderRes = await api.post("/orders", { 
-      address: address,  // ✅ Send full address object
-      paymentMethod 
+    // ✅ Create Razorpay order using FINAL AMOUNT
+    const rpRes = await api.post("/payments/razorpay/create-order", {
+      amount: finalAmount,
     });
-    const orderId = orderRes.data.orderId;
-    const rpRes = await api.post("/payments/razorpay/create-order", { orderId });
 
     const options = {
       key: rpRes.data.key,
-      amount: rpRes.data.amount * 100,
+      amount: rpRes.data.amount, // ✅ already in paise
       currency: "INR",
       name: "FirstFemale",
       order_id: rpRes.data.razorpayOrderId,
+
       handler: async (response: any) => {
-        await api.post("/payments/razorpay/verify", response);
-        router.push(`/checkout/success?orderId=${orderId}&type=${paymentMethod}`);
+        await api.post("/payments/razorpay/verify", {
+          ...response,
+          address, // 🔥 REQUIRED
+        });
+
+        router.push(`/checkout/success?type=RAZORPAY`);
       },
+
+      modal: {
+        ondismiss: () => {
+          setError("Payment cancelled. No order was placed.");
+        },
+      },
+
       theme: { color: "#ec4899" },
     };
 
     new (window as any).Razorpay(options).open();
   } catch (err: any) {
-    setError(err?.response?.data?.message || "Failed to place order");
+    setError(
+      err?.response?.data?.message || "Failed to place order"
+    );
   } finally {
     setLoading(false);
   }
