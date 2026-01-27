@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { useRouter } from "next/navigation";
-import { FiPackage, FiChevronRight, FiClock, FiCheckCircle, FiTruck, FiXCircle } from "react-icons/fi";
+import { FiPackage, FiChevronRight, FiClock, FiCheckCircle, FiTruck, FiXCircle, FiTag } from "react-icons/fi";
 
 export default function OrdersPage() {
   const router = useRouter();
@@ -117,15 +117,17 @@ export default function OrdersPage() {
           <div className="space-y-6">
             {orders.map((o) => {
               const style = getStatusStyle(o.status);
+              const subtotal = o.totalAmount + o.shippingCharge; // Items + Shipping
+              
               return (
                 <div
                   key={o.id}
                   onClick={() => router.push(`/orders/${o.id}`)}
                   className="group bg-white border border-gray-100 p-6 md:p-8 rounded-sm hover:border-brandPink transition-all cursor-pointer shadow-sm"
                 >
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
                     
-                    <div className="space-y-4">
+                    <div className="space-y-4 flex-1">
                       <div className="flex items-center gap-4">
                         <div className={`flex items-center gap-2 px-3 py-1 rounded-full border ${style.bg} ${style.text} ${style.border} text-[10px] font-black uppercase tracking-widest`}>
                           {style.icon} {o.status}
@@ -136,21 +138,47 @@ export default function OrdersPage() {
                       </div>
 
                       <div>
-                        <h3 className="text-lg font-black uppercase tracking-tighter">
+                        <h3 className="text-lg font-black uppercase tracking-tighter mb-3">
                           Order <span className="text-brandPink">#{o.id}</span>
                         </h3>
-                        <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest mt-1">
-                          Items Total: ₹{o.finalAmount.toLocaleString()}
-                        </p>
+                        
+                        {/* Price Breakdown */}
+                        <div className="space-y-1.5 text-[11px] font-bold">
+                          <div className="flex items-center justify-between md:justify-start md:gap-3">
+                            <span className="text-gray-400 uppercase tracking-widest">Items:</span>
+                            <span className="text-gray-600">₹{o.totalAmount.toLocaleString()}</span>
+                          </div>
+                          
+                          {o.shippingCharge > 0 && (
+                            <div className="flex items-center justify-between md:justify-start md:gap-3">
+                              <span className="text-gray-400 uppercase tracking-widest">Shipping:</span>
+                              <span className="text-gray-600">₹{o.shippingCharge.toLocaleString()}</span>
+                            </div>
+                          )}
+                          
+                          {o.couponDiscount > 0 && (
+                            <div className="flex items-center justify-between md:justify-start md:gap-3">
+                              <span className="text-green-600 uppercase tracking-widest flex items-center gap-1">
+                                <FiTag size={10} /> Coupon:
+                              </span>
+                              <span className="text-green-600 font-black">-₹{o.couponDiscount.toLocaleString()}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between md:justify-end gap-10 border-t md:border-t-0 pt-4 md:pt-0">
-                      <div className="text-right hidden md:block">
+                    <div className="flex items-center justify-between md:justify-end gap-6 md:gap-10 border-t md:border-t-0 pt-4 md:pt-0">
+                      <div className="text-right">
                          <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest mb-1">Total Paid</p>
-                         <p className="text-xl font-black text-brandBlack">₹{o.finalAmount.toLocaleString()}</p>
+                         <p className="text-2xl font-black text-brandBlack">₹{o.finalAmount.toLocaleString()}</p>
+                         {o.couponDiscount > 0 && (
+                           <p className="text-[9px] text-green-600 font-bold mt-1">
+                             Saved ₹{o.couponDiscount.toLocaleString()}
+                           </p>
+                         )}
                       </div>
-                      <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-brandPink group-hover:text-white transition-all">
+                      <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-brandPink group-hover:text-white transition-all flex-shrink-0">
                         <FiChevronRight size={20} />
                       </div>
                     </div>
