@@ -15,22 +15,31 @@ export default function CheckoutReviewPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const [preview, setPreview] = useState<any>(null);
+
   const [itemsTotal, setItemsTotal] = useState(0);
   const [shippingCharge, setShippingCharge] = useState(0);
   const [finalAmount, setFinalAmount] = useState(0);
   const [previewLoading, setPreviewLoading] = useState(true);
 
-  useEffect(() => {
-  if (!address) {
-    router.replace("/checkout/address");
-  }
-}, [address]);
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
 
-useEffect(() => {
-  if (!paymentMethod) {
-    router.replace("/checkout/payment");
-  }
-}, [paymentMethod]);
+  const [couponCode, setCouponCode] = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState("");
+
+  useEffect(() => {
+    if (!address) {
+      router.replace("/checkout/address");
+    }
+  }, [address]);
+
+  useEffect(() => {
+    if (!paymentMethod) {
+      router.replace("/checkout/payment");
+    }
+  }, [paymentMethod]);
 
   useEffect(() => {
     api.get("/cart").then((res) => {
@@ -44,21 +53,52 @@ useEffect(() => {
     const loadPreview = async () => {
       try {
         setPreviewLoading(true);
+
         const res = await api.post("/orders/preview", {
-  address: address,
-  paymentMethod,
-});;
+          address,
+          paymentMethod,
+        });
+
+        setPreview(res.data);
         setItemsTotal(res.data.itemsTotal);
         setShippingCharge(res.data.shippingCharge);
         setFinalAmount(res.data.finalAmount);
       } catch (err: any) {
-        setError(err?.response?.data?.message || "Unable to calculate shipping");
+        setError(err?.response?.data?.message || "Unable to calculate total");
       } finally {
         setPreviewLoading(false);
       }
     };
+
     loadPreview();
   }, [address, paymentMethod]);
+
+  const applyCoupon = async () => {
+    if (!couponCode) return;
+
+    setCouponLoading(true);
+    setCouponError("");
+
+    try {
+      const res = await api.post("/orders/preview", {
+        address,
+        paymentMethod,
+        couponCode,
+      });
+
+      setItemsTotal(res.data.itemsTotal);
+      setShippingCharge(res.data.shippingCharge);
+      setCouponDiscount(res.data.couponDiscount || 0);
+      setFinalAmount(res.data.finalAmount);
+      setAppliedCoupon(res.data.appliedCoupon);
+    } catch (err: any) {
+      setCouponError(err.response?.data?.message || "Invalid coupon");
+      setCouponDiscount(0);
+      setAppliedCoupon(null);
+    } finally {
+      setCouponLoading(false);
+    }
+  };
 
   const loadRazorpay = () =>
     new Promise((resolve) => {
@@ -70,69 +110,71 @@ useEffect(() => {
     });
 
   const placeOrder = async () => {
-  try {
-    setLoading(true);
-    setError("");
+    try {
+      setLoading(true);
+      setError("");
 
-    // ================= COD =================
-    if (paymentMethod === "COD") {
-      const res = await api.post("/orders", {
-        address,
-        paymentMethod: "COD",
-      });
-
-      router.push(
-        `/checkout/success?orderId=${res.data.orderId}&type=COD`
-      );
-      return;
-    }
-
-    // ================= ONLINE (RAZORPAY) =================
-    const loaded = await loadRazorpay();
-    if (!loaded) {
-      setError("Failed to load Razorpay");
-      return;
-    }
-
-    // ✅ Create Razorpay order using FINAL AMOUNT
-    const rpRes = await api.post("/payments/razorpay/create-order", {
-      amount: finalAmount,
-    });
-
-    const options = {
-      key: rpRes.data.key,
-      amount: rpRes.data.amount, // ✅ already in paise
-      currency: "INR",
-      name: "FirstFemale",
-      order_id: rpRes.data.razorpayOrderId,
-
-      handler: async (response: any) => {
-        await api.post("/payments/razorpay/verify", {
-          ...response,
-          address, // 🔥 REQUIRED
+      // ================= COD =================
+      if (paymentMethod === "COD") {
+        const res = await api.post("/orders", {
+          address,
+          paymentMethod: "COD",
+          couponCode: appliedCoupon || undefined, // ✅ FIXED: Use appliedCoupon, not couponCode
         });
 
-        router.push(`/checkout/success?type=RAZORPAY`);
-      },
+        router.push(
+          `/checkout/success?orderId=${res.data.orderId}&type=COD`
+        );
+        return;
+      }
 
-      modal: {
-        ondismiss: () => {
-          setError("Payment cancelled. No order was placed.");
+      // ================= ONLINE (RAZORPAY) =================
+      const loaded = await loadRazorpay();
+      if (!loaded) {
+        setError("Failed to load Razorpay");
+        return;
+      }
+
+      // ✅ Create Razorpay order using FINAL AMOUNT
+      const rpRes = await api.post("/payments/razorpay/create-order", {
+        amount: finalAmount,
+      });
+
+      const options = {
+        key: rpRes.data.key,
+        amount: rpRes.data.amount, // ✅ already in paise
+        currency: "INR",
+        name: "FirstFemale",
+        order_id: rpRes.data.razorpayOrderId,
+
+        handler: async (response: any) => {
+          await api.post("/payments/razorpay/verify", {
+            ...response,
+            address,
+            couponCode: appliedCoupon || undefined, // ✅ FIXED: Use appliedCoupon
+          });
+
+          router.push(`/checkout/success?type=RAZORPAY`);
         },
-      },
 
-      theme: { color: "#ec4899" },
-    };
+        modal: {
+          ondismiss: () => {
+            setError("Payment cancelled. No order was placed.");
+          },
+        },
 
-    new (window as any).Razorpay(options).open();
-  } catch (err: any) {
-    setError(
-      err?.response?.data?.message || "Failed to place order"
-    );
-  } finally {
-    setLoading(false);
-  }
-};
+        theme: { color: "#ec4899" },
+      };
+
+      new (window as any).Razorpay(options).open();
+    } catch (err: any) {
+      setError(
+        err?.response?.data?.message || "Failed to place order"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!address || !paymentMethod) return null;
 
@@ -254,6 +296,64 @@ useEffect(() => {
                       {shippingCharge === 0 ? "FREE" : `₹${shippingCharge}`}
                     </span>
                   </div>
+                  
+                  <div className="border-t pt-6 space-y-3">
+                    <p className="text-xs font-bold uppercase tracking-widest text-gray-400">
+                      Apply Coupon
+                    </p>
+
+                    <div className="flex gap-2">
+                      <input
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                        placeholder="Enter coupon code"
+                        className="flex-1 border px-3 py-2 rounded text-sm"
+                        disabled={!!appliedCoupon}
+                      />
+
+                      <button
+                        onClick={applyCoupon}
+                        disabled={couponLoading || !!appliedCoupon}
+                        className="px-4 bg-black text-white rounded text-sm disabled:bg-gray-300"
+                      >
+                        {couponLoading ? "..." : appliedCoupon ? "Applied" : "Apply"}
+                      </button>
+                    </div>
+
+                    {couponError && (
+                      <p className="text-xs text-red-500">{couponError}</p>
+                    )}
+                    
+                    {appliedCoupon && (
+                      <div className="flex items-center justify-between text-xs text-green-600 font-bold">
+                        <span>✓ Coupon Applied: {appliedCoupon}</span>
+                        <button 
+                          onClick={() => {
+                            setAppliedCoupon(null);
+                            setCouponDiscount(0);
+                            setCouponCode("");
+                            // Reload preview without coupon
+                            api.post("/orders/preview", { address, paymentMethod }).then(res => {
+                              setItemsTotal(res.data.itemsTotal);
+                              setShippingCharge(res.data.shippingCharge);
+                              setFinalAmount(res.data.finalAmount);
+                            });
+                          }}
+                          className="text-red-500 underline text-[10px]"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {couponDiscount > 0 && (
+                    <div className="flex justify-between text-xs font-bold uppercase tracking-tight text-green-600">
+                      <span>Coupon Discount</span>
+                      <span>- ₹{couponDiscount.toLocaleString()}</span>
+                    </div>
+                  )}
+
                   <div className="flex justify-between text-xl pt-8 border-t border-gray-50">
                     <span className="font-black uppercase tracking-tighter">Total Payable</span>
                     <span className="font-black text-brandPink">₹{finalAmount.toLocaleString()}</span>
