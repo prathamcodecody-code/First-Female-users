@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import ProductImages from "@/components/ProductImages";
 import AddToCartButton from "@/components/cart/AddToCartButton";
 import TrendingNow from "@/components/TrendingSection";
+import SizeGuideModal from "@/components/ui/izeGuideModal";
 import NewArrivals from "@/components/NewArrivals";
 import { api } from "@/lib/api";
 import { FiShield, FiTruck, FiRefreshCw } from "react-icons/fi"; // Added for trust badges
@@ -20,6 +21,7 @@ export default function ProductClient({ product }: any) {
   const [reviews, setReviews] = useState<any[]>([]);
   const [avg, setAvg] = useState<number | null>(null);
   const [selectedSize, setSelectedSize] = useState<any>(null);
+  const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
 
   const isOutOfStock = product.stock <= 0;
   const price = Number(product.price) || 0;
@@ -117,7 +119,12 @@ export default function ProductClient({ product }: any) {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <h3 className="text-xs font-bold uppercase tracking-widest text-brandBlack">Select Size</h3>
-                  <button className="text-[10px] font-bold text-brandPink underline uppercase tracking-tighter">Size Guide</button>
+                  <button 
+                    onClick={() => setIsSizeGuideOpen(true)}
+                    className="text-[10px] font-bold text-brandPink underline uppercase tracking-tighter"
+                  >
+                    Size Guide
+                  </button>
                 </div>
                 <div className="flex gap-3 flex-wrap">
                   {sizes.map((s: any) => (
@@ -228,6 +235,7 @@ export default function ProductClient({ product }: any) {
           <NewArrivals />
         </div>
       </div>
+      <SizeGuideModal isOpen={isSizeGuideOpen} onClose={() => setIsSizeGuideOpen(false)} />
     </div>
   );
 }
