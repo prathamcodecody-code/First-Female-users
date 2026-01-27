@@ -3,7 +3,7 @@
 import { api } from "@/lib/api";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import OrderTracking from "@/components/OrderTracking";
+import OrderStatusTimeline from "@/components/OrderTracking";
 import ReviewModal from "@/components/reviews/reviews";
 import { FiPackage, FiMapPin, FiCreditCard, FiArrowLeft } from "react-icons/fi";
 
@@ -93,7 +93,13 @@ export default function OrderDetailsPage() {
 
           {/* TRACKING VISUAL */}
           <div className="bg-white border border-gray-100 p-8 rounded-sm">
-             <OrderTracking status={order.status} />
+             <OrderStatusTimeline
+  status={order.status}
+  createdAt={order.createdAt}
+  confirmedAt={order.confirmedAt}
+  shippedAt={order.shippedAt}
+  deliveredAt={order.deliveredAt}
+/>
           </div>
 
           {/* SHIPPING & PAYMENT INFO */}
@@ -121,9 +127,15 @@ export default function OrderDetailsPage() {
                 </div>
                 <div>
                   <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Status</p>
-                  <p className={`text-sm font-bold uppercase tracking-tight ${["CONFIRMED", "SHIPPED", "DELIVERED"].includes(order.status) ? 'text-emerald-600' : 'text-amber-500'}`}>
-                    {["CONFIRMED", "SHIPPED", "DELIVERED"].includes(order.status) ? "Paid" : "Payment Pending"}
-                  </p>
+                  <p
+  className={`text-sm font-bold uppercase tracking-tight ${
+    order.paidAt
+      ? "text-emerald-600"
+      : "text-amber-500"
+  }`}
+>
+  {order.paidAt ? "Paid" : "Payment Pending"}
+</p>
                 </div>
               </div>
             </div>
