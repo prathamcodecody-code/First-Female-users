@@ -30,13 +30,13 @@
 const SUBTYPE_IMAGES: Record<number, string> = {
   11: "/categories/Dress.png",
   15: "/categories/JumpSuits.png",
-  16: "/categories/PlaySuits.png",
+  67: "/categories/PlaySuits.png",
 };
 
   const HOMEPAGE_SUBTYPES = [
     { id: 11, name: "Dresses" },
     { id: 15, name: "Jumpsuits" },
-    { id: 16, name: "Playsuits" },
+    { id: 67, name: "co-ords" },
   ];
 
   export default function HomePage() {
