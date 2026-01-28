@@ -8,6 +8,7 @@ import SizeGuideModal from "@/components/ui/izeGuideModal";
 import NewArrivals from "@/components/NewArrivals";
 import { api } from "@/lib/api";
 import { FiShield, FiTruck, FiRefreshCw } from "react-icons/fi"; // Added for trust badges
+import CheckPincode from "@/components/ui/CheckPincode"
 
 export default function ProductClient({ product }: any) {
   const SIZE_ORDER: Record<string, number> = {
@@ -162,7 +163,7 @@ export default function ProductClient({ product }: any) {
                 disabled={false}
               />
             </div>
-
+<CheckPincode />
             {/* TRUST BADGES - Very Gen-Z/E-com style */}
             <div className="grid grid-cols-3 gap-2 pt-6 border-t border-gray-100">
                <div className="flex flex-col items-center text-center space-y-1">
