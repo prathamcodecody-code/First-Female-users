@@ -77,8 +77,8 @@ export default function ContactPage() {
           <ContactItem
             icon={<FaInstagram />}
             label="Instagram"
-            value="@firstfemale"
-            link="https://instagram.com/firstfemale"
+            value="@firstfemale_official"
+            link="https://www.instagram.com/firstfemale_official?igsh=N3RlZ3Z4NzI5MWxx&utm_source=qr"
           />
 
           <ContactItem
@@ -210,3 +210,4 @@ function ContactItem({
     </div>
   );
 }
+
