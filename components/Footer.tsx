@@ -94,7 +94,7 @@ export default function Footer() {
                 (s) => (
                   <li key={s}>
                     <a
-                      href="#"
+                      href="https://www.instagram.com/firstfemale_official?igsh=N3RlZ3Z4NzI5MWxx&utm_source=qr"
                       className="hover:text-brandPink transition"
                     >
                       {s}
@@ -155,5 +155,6 @@ export default function Footer() {
     </>
   );
 }
+
 
 
