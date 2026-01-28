@@ -48,57 +48,64 @@ export default function CheckoutReviewPage() {
   }, []);
 
   useEffect(() => {
-    if (!address || !paymentMethod) return;
+  if (!address || !paymentMethod) return;
 
-    const loadPreview = async () => {
-      try {
-        setPreviewLoading(true);
-
-        const res = await api.post("/orders/preview", {
-          address,
-          paymentMethod,
-        });
-
-        setPreview(res.data);
-        setItemsTotal(res.data.itemsTotal);
-        setShippingCharge(res.data.shippingCharge);
-        setFinalAmount(res.data.finalAmount);
-      } catch (err: any) {
-        setError(err?.response?.data?.message || "Unable to calculate total");
-      } finally {
-        setPreviewLoading(false);
-      }
-    };
-
-    loadPreview();
-  }, [address, paymentMethod]);
-
-  const applyCoupon = async () => {
-    if (!couponCode) return;
-
-    setCouponLoading(true);
-    setCouponError("");
-
+  const loadPreview = async () => {
     try {
+      setPreviewLoading(true);
+
       const res = await api.post("/orders/preview", {
         address,
         paymentMethod,
-        couponCode,
       });
 
-      setItemsTotal(res.data.itemsTotal);
-      setShippingCharge(res.data.shippingCharge);
-      setCouponDiscount(res.data.couponDiscount || 0);
-      setFinalAmount(res.data.finalAmount);
-      setAppliedCoupon(res.data.appliedCoupon);
+      const p = res.data.pricing;
+
+      setItemsTotal(p.itemsSubtotal);
+      setShippingCharge(p.shipping);
+      setCouponDiscount(p.couponDiscount || 0);
+      setFinalAmount(p.payable);
+      setAppliedCoupon(res.data.appliedCoupon || null);
     } catch (err: any) {
-      setCouponError(err.response?.data?.message || "Invalid coupon");
-      setCouponDiscount(0);
-      setAppliedCoupon(null);
+      setError(err?.response?.data?.message || "Unable to calculate total");
     } finally {
-      setCouponLoading(false);
+      setPreviewLoading(false);
     }
   };
+
+  loadPreview();
+}, [address, paymentMethod]);
+
+
+  const applyCoupon = async () => {
+  if (!couponCode) return;
+
+  setCouponLoading(true);
+  setCouponError("");
+
+  try {
+    const res = await api.post("/orders/preview", {
+      address,
+      paymentMethod,
+      couponCode,
+    });
+
+    const p = res.data.pricing;
+
+    setItemsTotal(p.itemsSubtotal);
+    setShippingCharge(p.shipping);
+    setCouponDiscount(p.couponDiscount || 0);
+    setFinalAmount(p.payable);
+    setAppliedCoupon(res.data.appliedCoupon || null);
+  } catch (err: any) {
+    setCouponError(err.response?.data?.message || "Invalid coupon");
+    setCouponDiscount(0);
+    setAppliedCoupon(null);
+  } finally {
+    setCouponLoading(false);
+  }
+};
+
 
   const loadRazorpay = () =>
     new Promise((resolve) => {
@@ -288,7 +295,7 @@ export default function CheckoutReviewPage() {
                 <div className="space-y-4 mb-10">
                   <div className="flex justify-between text-xs font-bold uppercase tracking-tight">
                     <span className="text-gray-400">Subtotal</span>
-                    <span>₹{itemsTotal.toLocaleString()}</span>
+                    <span>₹{(itemsTotal || 0).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-xs font-bold uppercase tracking-tight">
                     <span className="text-gray-400">Shipping</span>
