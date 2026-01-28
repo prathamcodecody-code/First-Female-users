@@ -1,13 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { api } from "@/lib/api";
 import { useCheckout } from "@/app/context/CheckoutContext";
-import { FiMapPin, FiChevronRight } from "react-icons/fi"; // Added for UI polish
+import { FiMapPin } from "react-icons/fi";
 
 export default function CheckoutAddressPage() {
   const router = useRouter();
   const { setAddress } = useCheckout();
+
+  const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
 
   const [address, setAddressLocal] = useState({
     name: "",
@@ -20,149 +24,166 @@ export default function CheckoutAddressPage() {
 
   const [error, setError] = useState("");
 
+  /* ================= FETCH SAVED ADDRESSES ================= */
+  useEffect(() => {
+    api.get("/addresses").then((res) => {
+      setSavedAddresses(res.data);
+      const def = res.data.find((a: any) => a.isDefault);
+      if (def) setSelectedAddressId(def.id);
+    });
+  }, []);
+
   const handleChange = (field: string, value: string) => {
     setAddressLocal((prev) => ({ ...prev, [field]: value }));
   };
 
+  /* ================= CONTINUE ================= */
   const continueToPayment = () => {
-    if (Object.values(address).some((v) => !v.trim())) {
-      setError("Please fill all address fields to proceed");
+  // Saved address selected
+  if (selectedAddressId) {
+    const selected = savedAddresses.find(a => a.id === selectedAddressId);
+
+    if (!selected) {
+      setError("Invalid address selected");
       return;
     }
 
-    setError("");
-    setAddress(address);
+    setAddress({
+      id: selected.id,
+      name: selected.name,
+      phone: selected.phone,
+      street: selected.street,
+      city: selected.city,
+      state: selected.state,
+      pincode: selected.pincode,
+    });
+
     router.push("/checkout/payment");
-  };
+    return;
+  }
+
+  // Manual address
+  if (Object.values(address).some(v => !v.trim())) {
+    setError("Please fill all address fields");
+    return;
+  }
+
+  setAddress(address);
+  router.push("/checkout/payment");
+};
+
+
+  const usingSavedAddress = !!selectedAddressId;
 
   return (
     <div className="bg-[#FCFAFA] min-h-screen">
       <div className="max-w-[1440px] mx-auto px-4 md:px-10 py-10 md:py-16">
-        
-        {/* PROGRESS STEPPER - Boutique Style */}
-        <header className="mb-16 flex items-center justify-center gap-6">
-          <div className="flex items-center gap-2">
-             <span className="w-6 h-6 rounded-full bg-brandPink text-white flex items-center justify-center text-[10px] font-black shadow-lg shadow-brandPink/20">1</span>
-             <span className="text-[11px] font-black uppercase tracking-widest text-brandBlack">Shipping</span>
-          </div>
-          <div className="h-[1px] w-12 bg-gray-200" />
-          <div className="flex items-center gap-2 opacity-30">
-             <span className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center text-[10px] font-black">2</span>
-             <span className="text-[11px] font-black uppercase tracking-widest text-gray-400">Payment</span>
-          </div>
-          <div className="h-[1px] w-12 bg-gray-200" />
-          <div className="flex items-center gap-2 opacity-30">
-             <span className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center text-[10px] font-black">3</span>
-             <span className="text-[11px] font-black uppercase tracking-widest text-gray-400">Review</span>
-          </div>
-        </header>
 
+        {/* HEADER */}
         <div className="max-w-3xl mx-auto">
-          <header className="mb-10">
-            <h1 className="text-3xl font-black uppercase tracking-tighter text-brandBlack italic font-serif">
-              Delivery Details
-            </h1>
-            <p className="text-xs text-gray-400 uppercase tracking-widest mt-2">Where should we send your pieces?</p>
-          </header>
+          <h1 className="text-3xl font-black uppercase tracking-tighter text-brandBlack italic font-serif mb-2">
+            Delivery Details
+          </h1>
+          <p className="text-xs text-gray-400 uppercase tracking-widest mb-10">
+            Where should we send your pieces?
+          </p>
 
-          <div className="bg-white border border-gray-100 p-8 md:p-12 rounded-sm shadow-sm transition-all">
+          {/* ================= SAVED ADDRESSES ================= */}
+          {savedAddresses.length > 0 && (
+            <div className="mb-12 space-y-4">
+              <h3 className="text-xs font-black uppercase tracking-widest text-gray-400">
+                Saved Addresses
+              </h3>
+
+              {savedAddresses.map((addr) => (
+                <div
+                  key={addr.id}
+                  onClick={() => {
+  setSelectedAddressId(addr.id);
+
+  setAddress({
+    id: addr.id,
+    name: addr.name,
+    phone: addr.phone,
+    street: addr.street,
+    city: addr.city,
+    state: addr.state,
+    pincode: addr.pincode,
+  });
+}}
+                  className={`border p-5 cursor-pointer rounded-sm transition-all
+                    ${
+                      selectedAddressId === addr.id
+                        ? "border-brandPink bg-brandPink/5"
+                        : "border-gray-100 hover:border-gray-300"
+                    }`}
+                >
+                  <div className="flex gap-3">
+                    <FiMapPin className="mt-1 text-gray-400" />
+                    <div>
+                      <p className="font-bold text-sm">{addr.name}</p>
+                      <p className="text-xs text-gray-500">
+                        {addr.street}, {addr.city}, {addr.state} – {addr.pincode}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {addr.phone}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* ================= MANUAL FORM ================= */}
+          <div
+            className={`bg-white border p-8 md:p-12 rounded-sm shadow-sm transition-all
+              ${usingSavedAddress ? "opacity-40 pointer-events-none" : ""}
+            `}
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-12">
-              <Field
-                label="Full Name"
-                value={address.name}
-                onChange={(v) => handleChange("name", v)}
-                placeholder="Name on the parcel"
-              />
-
-              <Field
-                label="Mobile Number"
-                type="tel"
-                value={address.phone}
-                onChange={(v) => handleChange("phone", v)}
-                placeholder="10-digit number"
-              />
-
+              <Field label="Full Name" value={address.name} onChange={(v : string) => handleChange("name", v)} />
+              <Field label="Mobile Number" value={address.phone} onChange={(v:string) => handleChange("phone", v)} />
               <div className="md:col-span-2">
-                <Field
-                  label="Street Address"
-                  value={address.street}
-                  onChange={(v) => handleChange("street", v)}
-                  placeholder="House No, Colony, Area"
-                />
+                <Field label="Street Address" value={address.street} onChange={(v:string) => handleChange("street", v)} />
               </div>
-
-              <Field
-                label="City"
-                value={address.city}
-                onChange={(v) => handleChange("city", v)}
-              />
-
-              <Field
-                label="State"
-                value={address.state}
-                onChange={(v) => handleChange("state", v)}
-              />
-
-              <Field
-                label="Pincode"
-                type="number"
-                value={address.pincode}
-                onChange={(v) => handleChange("pincode", v)}
-                placeholder="6-digit ZIP"
-              />
+              <Field label="City" value={address.city} onChange={(v:string) => handleChange("city", v)} />
+              <Field label="State" value={address.state} onChange={(v:string) => handleChange("state", v)} />
+              <Field label="Pincode" value={address.pincode} onChange={(v:string) => handleChange("pincode", v)} />
             </div>
 
-            {/* ERROR */}
             {error && (
-              <p className="text-red-500 text-[10px] font-bold uppercase tracking-widest mt-8 bg-red-50 p-3 text-center border border-red-100">
+              <p className="text-red-500 text-[10px] font-bold uppercase tracking-widest mt-8">
                 {error}
               </p>
             )}
-
-            {/* CTA */}
-            <button
-              onClick={continueToPayment}
-              className="mt-12 w-full bg-brandBlack text-white py-5 rounded-sm font-black uppercase tracking-[0.3em] text-[12px] shadow-xl hover:bg-brandPink transition-all active:scale-[0.98]"
-            >
-              Continue to Payment
-            </button>
           </div>
-          
-          <p className="text-center text-[9px] text-gray-300 uppercase tracking-widest mt-8 font-bold">
-            Secure 256-bit SSL Encrypted Connection
-          </p>
+
+          {/* CTA */}
+          <button
+            onClick={continueToPayment}
+            className="mt-12 w-full bg-brandBlack text-white py-5 rounded-sm font-black uppercase tracking-[0.3em] text-[12px]"
+          >
+            Continue to Payment
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
-/* ---------------- ENHANCED FIELD COMPONENT ---------------- */
+/* ================= FIELD ================= */
 
-function Field({
-  label,
-  value,
-  onChange,
-  type = "text",
-  placeholder = ""
-}: {
-  label: string;
-  value: string;
-  type?: string;
-  placeholder?: string;
-  onChange: (v: string) => void;
-}) {
+function Field({ label, value, onChange }: any) {
   return (
     <div className="flex flex-col gap-2">
       <label className="text-[10px] font-black uppercase tracking-[0.1em] text-gray-400">
         {label}
       </label>
       <input
-        type={type}
         value={value}
-        placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full border-b border-gray-100 py-3 outline-none focus:border-brandPink transition-all text-sm font-bold placeholder:text-gray-200 placeholder:font-normal"
+        className="border-b py-3 outline-none text-sm font-bold"
       />
     </div>
   );
