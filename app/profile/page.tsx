@@ -5,13 +5,15 @@ import { useAuth } from "@/app/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import AuthModal from "../auth/AuthModal";
-import { FiUser, FiPackage, FiLogOut, FiEdit2 } from "react-icons/fi";
+import { FiUser, FiPackage, FiLogOut, FiEdit2, FiMapPin } from "react-icons/fi";
+import AddressesTab from "@/components/ui/AddressesTab";
+
 
 export default function ProfilePage() {
   const { user, logout, setUser } = useAuth();
   const router = useRouter();
   const [showAuth, setShowAuth] = useState(false);
-  const [activeTab, setActiveTab] = useState<"account" | "orders">("account");
+  const [activeTab, setActiveTab] = useState<"account" | "addresses" | "orders">("account");
 
   if (!user) {
     return (
@@ -47,7 +49,13 @@ export default function ProfilePage() {
             >
               Account Details
             </SidebarBtn>
-
+            <SidebarBtn
+  active={activeTab === "addresses"}
+  onClick={() => setActiveTab("addresses")}
+  icon={<FiMapPin />}
+>
+  Saved Addresses
+</SidebarBtn>
             <SidebarBtn
               active={activeTab === "orders"}
               onClick={() => setActiveTab("orders")}
@@ -69,11 +77,12 @@ export default function ProfilePage() {
 
           {/* CONTENT */}
           <main className="lg:col-span-9">
-            {activeTab === "account" && (
-              <AccountDetails user={user} setUser={setUser} />
-            )}
-            {activeTab === "orders" && <OrdersShortcut />}
-          </main>
+  {activeTab === "account" && (
+    <AccountDetails user={user} setUser={setUser} />
+  )}
+  {activeTab === "addresses" && <AddressesTab />}
+  {activeTab === "orders" && <OrdersShortcut />}
+</main>
         </div>
       </div>
     </div>
