@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import ProductImages from "@/components/ProductImages";
 import AddToCartButton from "@/components/cart/AddToCartButton";
+import AddToWishlistButton from "@/components/wishlist/AddToWishlistButton"; // Import Wishlist
 import TrendingNow from "@/components/TrendingSection";
 import SizeGuideModal from "@/components/ui/izeGuideModal";
 import NewArrivals from "@/components/NewArrivals";
 import { api } from "@/lib/api";
-import { FiShield, FiTruck, FiRefreshCw } from "react-icons/fi"; // Added for trust badges
+import { FiShield, FiTruck, FiRefreshCw } from "react-icons/fi"; 
 import CheckPincode from "@/components/ui/CheckPincode"
 
 export default function ProductClient({ product }: any) {
@@ -59,15 +60,17 @@ export default function ProductClient({ product }: any) {
     <div className="w-full bg-white pb-24 md:pb-12">
       <div className="max-w-[1440px] mx-auto px-4 md:px-10 py-6 md:py-12">
         
-        {/* BREADCRUMB - Subtle Gen-Z detail */}
         <nav className="text-[10px] uppercase tracking-widest text-gray-400 mb-6 hidden md:block">
           Home / {product.category?.name} / <span className="text-black font-bold">{product.title}</span>
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16">
           
-          {/* LEFT: IMAGES (Sticky on Desktop) */}
-          <div className="lg:col-span-7 h-fit lg:sticky lg:top-24">
+          {/* LEFT: IMAGES */}
+          <div className="lg:col-span-7 h-fit lg:sticky lg:top-24 relative">
+            {/* Wishlist Button on Image */}
+            <AddToWishlistButton productId={product.id} sizeId={selectedSize?.id} />
+            
             <ProductImages
               images={[product.img1, product.img2, product.img3, product.img4].filter(Boolean)}
             />
@@ -75,13 +78,12 @@ export default function ProductClient({ product }: any) {
 
           {/* RIGHT: PRODUCT INFO */}
           <div className="lg:col-span-5 space-y-8">
-            
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                  <span className="bg-brandPinkLight text-brandPink text-[10px] font-bold px-2 py-0.5 rounded-sm uppercase tracking-tighter">
                     Trending Now
                  </span>
-                <span className="text-xs font-bold">★ {5}</span>
+                <span className="text-xs font-bold">★ {avg || 5}</span>
               </div>
               <h1 className="text-2xl md:text-4xl font-bold text-brandBlack leading-tight tracking-tight uppercase">
                 {product.title}
@@ -115,7 +117,7 @@ export default function ProductClient({ product }: any) {
               )}
             </div>
 
-            {/* SIZE SELECTOR - Enhanced UI */}
+            {/* SIZE SELECTOR */}
             {sizes.length > 0 && (
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
@@ -154,17 +156,24 @@ export default function ProductClient({ product }: any) {
                 </span>
             </div>
 
-            {/* DESKTOP ADD TO CART */}
-            <div className="hidden md:block">
-               <AddToCartButton
-                productId={product.id}
-                stock={product.stock}
-                sizeId={selectedSize?.id}
-                disabled={false}
-              />
+            {/* DESKTOP ACTIONS */}
+            <div className="hidden md:flex items-center gap-4">
+               <div className="flex-1">
+                  <AddToCartButton
+                    productId={product.id}
+                    stock={product.stock}
+                    sizeId={selectedSize?.id}
+                    disabled={false}
+                  />
+               </div>
+               {/* Secondary Wishlist Button for UX */}
+               <div className="relative h-[50px] w-[50px]">
+                  <AddToWishlistButton productId={product.id} sizeId={selectedSize?.id} />
+               </div>
             </div>
-<CheckPincode />
-            {/* TRUST BADGES - Very Gen-Z/E-com style */}
+
+            <CheckPincode />
+
             <div className="grid grid-cols-3 gap-2 pt-6 border-t border-gray-100">
                <div className="flex flex-col items-center text-center space-y-1">
                   <FiTruck className="text-brandPink" />
@@ -180,12 +189,13 @@ export default function ProductClient({ product }: any) {
                </div>
             </div>
 
-            {/* PRODUCT DETAILS */}
+            {/* ENHANCED PRODUCT DETAILS UI */}
             <div className="pt-8 space-y-4">
               <h3 className="text-xs font-bold uppercase tracking-widest text-brandBlack border-b border-gray-100 pb-2">Description</h3>
-              <p className="text-sm text-gray-600 leading-relaxed font-medium">
+              {/* Added line-height and letter-spacing for readability */}
+              <div className="text-sm text-gray-600 leading-[1.8] font-medium tracking-wide whitespace-pre-line space-y-4">
                 {product.description || "Every main character needs the perfect fit. This piece is designed to keep you at the center of attention with premium fabric and a silhouette that slays."}
-              </p>
+              </div>
             </div>
           </div>
         </div>
