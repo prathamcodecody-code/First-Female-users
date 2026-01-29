@@ -29,12 +29,18 @@ export default function CheckoutReviewPage() {
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState("");
 
+  const [availableCoupons, setAvailableCoupons] = useState<any[]>([]);
+
   useEffect(() => {
     if (!address) {
       router.replace("/checkout/address");
     }
   }, [address]);
-
+useEffect(() => {
+  api.get("/coupons/available").then(res => {
+    setAvailableCoupons(res.data || []);
+  });
+}, []);
   useEffect(() => {
     if (!paymentMethod) {
       router.replace("/checkout/payment");
@@ -303,7 +309,45 @@ export default function CheckoutReviewPage() {
                       {shippingCharge === 0 ? "FREE" : `₹${shippingCharge}`}
                     </span>
                   </div>
-                  
+                  {availableCoupons.length > 0 && !appliedCoupon && (
+  <div className="mb-4 space-y-2">
+    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+      Available Coupons
+    </p>
+
+    <div className="space-y-2">
+      {availableCoupons.map(c => (
+        <button
+          key={c.code}
+          onClick={() => {
+            setCouponCode(c.code);
+            applyCoupon();
+          }}
+          className="w-full border border-dashed border-brandPink px-4 py-3 text-left hover:bg-brandPink/5 transition"
+        >
+          <div className="flex justify-between items-center">
+            <span className="text-xs font-black tracking-widest">
+              {c.code}
+            </span>
+            <span className="text-[10px] font-bold text-brandPink">
+              APPLY
+            </span>
+          </div>
+
+          <p className="text-[10px] text-gray-500 mt-1">
+            {c.type === "PERCENT"
+              ? `${c.value}% OFF`
+              : `₹${c.value} OFF`}
+            {c.minOrderValue
+              ? ` on orders above ₹${c.minOrderValue}`
+              : ""}
+          </p>
+        </button>
+      ))}
+    </div>
+  </div>
+)}
+
                   <div className="border-t pt-6 space-y-3">
                     <p className="text-xs font-bold uppercase tracking-widest text-gray-400">
                       Apply Coupon
