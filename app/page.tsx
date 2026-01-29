@@ -1,165 +1,133 @@
-  "use client";
+"use client";
 
-  import { useEffect, useState } from "react";
-  import HeroCarousel from "@/components/HeroCarousel";
-  import TrendingNow from "@/components/TrendingSection";
-  import NewArrivals from "@/components/NewArrivals";
-  import HomeFilter from "@/components/Home/HomeFilter";
-  import ProductCard from "@/components/ProductCard";
-  import DiscountSection from "@/components/DiscountDeals";
-  import CategoryStrip from "@/components/Home/CategoryStrip";
-  import MainCharacterSection from "@/components/Home/MainCharacterSection";
-  import FeaturedProductSection from "@/components/Home/ShopByCategory";
-  import { api } from "@/lib/api";
+import { useEffect, useState } from "react";
+import HeroCarousel from "@/components/HeroCarousel";
+import TrendingNow from "@/components/TrendingSection";
+import NewArrivals from "@/components/NewArrivals";
+import HomeFilter from "@/components/Home/HomeFilter";
+import ProductCard from "@/components/ProductCard";
+import DiscountSection from "@/components/DiscountDeals";
+import MainCharacterSection from "@/components/Home/MainCharacterSection";
+import FeaturedProductSection from "@/components/Home/ShopByCategory";
+import ResolvedCategoryStrip from "@/components/Home/ResolvedCategoryStrip";
+import { api } from "@/lib/api";
 
-  type Product = {
-    id: number;
-    title: string;
-    slug: string;
-    price: number;
-    finalPrice: number;
-    img1: string;
+type Product = {
+  id: number;
+  title: string;
+  slug: string;
+  price: number;
+  finalPrice: number;
+  img1: string;
+};
+
+type HomepageSection = {
+  id: number;
+  type: "HERO" | "CATEGORY_STRIP" | "EDITORIAL" | "INFLUENCER";
+  title?: string;
+  config: any;
+  position: number;
+  isActive: boolean;
+};
+
+export default function HomePage() {
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [hasAppliedFilter, setHasAppliedFilter] = useState(false);
+  const [homepageSections, setHomepageSections] = useState<HomepageSection[]>([]);
+
+  // 🔥 Fetch homepage sections
+  useEffect(() => {
+    api.get("/homepage").then((res) => {
+      console.log("HOMEPAGE API RESPONSE →", res.data);
+      setHomepageSections(res.data || []);
+    });
+  }, []);
+
+  // Filters
+  const applyFilters = async (filter: any) => {
+    setHasAppliedFilter(true);
+
+    const params: any = {};
+    if (filter.typeId) params.typeId = filter.typeId;
+    if (filter.minPrice) params.minPrice = filter.minPrice;
+    if (filter.maxPrice) params.maxPrice = filter.maxPrice;
+    if (filter.sort) params.sort = filter.sort;
+
+    const res = await api.get("/products", { params });
+    setFilteredProducts(res.data.products || []);
   };
 
-  type Subtype = {
-  id: number;
-  name: string;
-  image: string;
-};
-
-const SUBTYPE_IMAGES: Record<number, string> = {
-  11: "/categories/Dress.png",
-  15: "/categories/JumpSuits.png",
-  67: "/categories/PlaySuits.png",
-};
-
-  const HOMEPAGE_SUBTYPES = [
-    { id: 11, name: "Dresses" },
-    { id: 15, name: "Jumpsuits" },
-    { id: 67, name: "co-ords" },
-  ];
-
-  export default function HomePage() {
-    const [sections, setSections] = useState<
-      { id: number; name: string; products: Product[] }[]
-    >([]);
-
-    const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
-    const [hasAppliedFilter, setHasAppliedFilter] = useState(false);
-    
-const [validSubtypes, setValidSubtypes] = useState<Subtype[]>([]);
-
-    // 🔥 Fetch featured sections (ONLY populated ones)
-    useEffect(() => {
-  async function loadHomepageSubtypes() {
-    const responses = await Promise.all(
-      HOMEPAGE_SUBTYPES.map((sub) =>
-        api.get("/products", {
-          params: { subtypeId: sub.id, limit: 4 },
-        })
-      )
-    );
-
-    const populated = responses
-      .map((res, i) => ({
-        ...HOMEPAGE_SUBTYPES[i],
-        products: res.data.products || [],
-      }))
-      .filter((s) => s.products.length > 0);
-
-    // Featured sections
-    setSections(populated);
-
-    // Category strip (subtypes)
-    setValidSubtypes(
-      populated.map((s) => ({
-        id: s.id,
-        name: s.name,
-        image: SUBTYPE_IMAGES[s.id] || "/placeholder.png",
-      }))
-    );
-  }
-
-  loadHomepageSubtypes();
-}, []);
-
-    // Filters
-    const applyFilters = async (filter: any) => {
-      
-  setHasAppliedFilter(true);
-
-  const params: any = {};
-
-  // ✅ FIX: use typeId (not categoryId)
-  if (filter.typeId) params.typeId = filter.typeId;
-
-  // ✅ FIX: price filters
-  if (filter.minPrice) params.minPrice = filter.minPrice;
-  if (filter.maxPrice) params.maxPrice = filter.maxPrice;
-
-  // ✅ sorting
-  if (filter.sort) params.sort = filter.sort;
-
-  const res = await api.get("/products", { params });
-  console.log("FILTER PARAMS →", params);
-  setFilteredProducts(res.data.products || []);
-};
-
-
-
-    return  (
-      <div className="max-w-7xl mx-auto px-6 py-10">
-        <CategoryStrip categories={validSubtypes} />
-        <HeroCarousel />
-        
-        {/* FEATURED SECTIONS */}
-        {sections.map((section) => (
-          <FeaturedProductSection
+  // 🔥 Render sections dynamically
+  const renderSection = (section: HomepageSection) => {
+    switch (section.type) {
+      case "HERO":
+        return (
+          <HeroCarousel
             key={section.id}
-            title={`Shop ${section.name}`}
-            exploreLink={`/all-products?subtypeId=${section.id}`}
-            products={section.products}
+            slides={section.config?.slides || []}
           />
-        ))}
-        <MainCharacterSection />
-        <NewArrivals />
-        <DiscountSection />
-        <TrendingNow />
+        );
 
-        {/* --- ALWAYS SHOW THE FILTER HERE --- */}
-      <section className="mt-24 border-t pt-16 overflow-x-hidden">
-    <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8">
+      case "CATEGORY_STRIP":
+        return (
+          <ResolvedCategoryStrip
+            key={section.id}
+            items={section.config?.items || []}
+          />
+        );
 
-      {/* FILTER */}
-      <aside className="sticky top-30 h-fit max-w-full overflow-x-hidden">
-        <HomeFilter onFilter={applyFilters} />
-      </aside>
-
-      {/* RESULTS */}
-      <div className="w-full max-w-full overflow-x-hidden">
-        {hasAppliedFilter ? (
-          filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 w-full max-w-full">
-              {filteredProducts.map((p) => (
-                <ProductCard key={p.id} product={p} />
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-500 py-20 text-center border rounded-sm">
-              No products found matching your filters.
-            </p>
-          )
-        ) : (
-          <div className="py-20 text-center border border-dashed rounded-sm text-gray-400">
-            Select filters to see products.
+      case "EDITORIAL":
+        return (
+          <div key={section.id}>
+            Editorial Section (TODO)
           </div>
-        )}
-      </div>
+        );
 
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto px-6 py-10">
+      {/* 🔥 DYNAMIC HOMEPAGE SECTIONS */}
+      {homepageSections
+        .sort((a, b) => a.position - b.position)
+        .map(renderSection)}
+
+      <MainCharacterSection />
+      <NewArrivals />
+      <DiscountSection />
+      <TrendingNow />
+
+      {/* FILTER SECTION */}
+      <section className="mt-24 border-t pt-16 overflow-x-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8">
+          <aside className="sticky top-30 h-fit max-w-full overflow-x-hidden">
+            <HomeFilter onFilter={applyFilters} />
+          </aside>
+
+          <div className="w-full max-w-full overflow-x-hidden">
+            {hasAppliedFilter ? (
+              filteredProducts.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                  {filteredProducts.map((p) => (
+                    <ProductCard key={p.id} product={p} />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 py-20 text-center border rounded-sm">
+                  No products found matching your filters.
+                </p>
+              )
+            ) : (
+              <div className="py-20 text-center border border-dashed rounded-sm text-gray-400">
+                Select filters to see products.
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
     </div>
-  </section>
-
-
-      </div>
-    );
-  }
+  );
+}
