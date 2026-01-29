@@ -41,7 +41,7 @@ export default function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
         res.data.forEach((m: Media) => {
           map[m.id] = {
             ...m,
-            url: `${process.env.NEXT_PUBLIC_API_URL}${m.url}`,
+            url: `${process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "")}${m.url}`,
           };
         });
         setMediaMap(map);
@@ -174,3 +174,4 @@ export default function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
     </div>
   );
 }
+
