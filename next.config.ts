@@ -5,7 +5,6 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "api.firstfemale.in",
-        pathname: "/uploads/**",
       },
     ],
   },
