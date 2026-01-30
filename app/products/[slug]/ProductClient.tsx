@@ -17,8 +17,11 @@ export default function ProductClient({ product }: any) {
   };
 
   const sizes = Array.isArray(product.sizes)
-    ? [...product.sizes].sort((a, b) => (SIZE_ORDER[a.size] ?? 999) - (SIZE_ORDER[b.size] ?? 999))
-    : [];
+  ? product.sizes
+      .filter((s: any) => s.stock > 0) // Hide size if stock is 0
+      .sort((a:any, b:any) => (SIZE_ORDER[a.size] ?? 999) - (SIZE_ORDER[b.size] ?? 999))
+  : [];
+
 
   const [reviews, setReviews] = useState<any[]>([]);
   const [avg, setAvg] = useState<number | null>(null);
