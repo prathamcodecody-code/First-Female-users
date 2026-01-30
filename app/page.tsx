@@ -30,17 +30,71 @@ type HomepageSection = {
   isActive: boolean;
 };
 
+// 🔥 Define your subtypes here - these are the categories you want to show on homepage
+const HOMEPAGE_SUBTYPES = [
+  { id: 11, name: "Dresses" },
+  { id: 15, name: "Jumpsuits" },
+  { id: 67, name: "Co-ords" },
+];
+
 export default function HomePage() {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [hasAppliedFilter, setHasAppliedFilter] = useState(false);
   const [homepageSections, setHomepageSections] = useState<HomepageSection[]>([]);
+  
+  // 🔥 FIXED: Corrected state variable name
+  const [sections, setSections] = useState<{id: number; name: string; products: Product[]}[]>([]);
+  const [isLoadingSections, setIsLoadingSections] = useState(true);
 
-  // 🔥 Fetch homepage sections
+  // 🔥 Fetch homepage sections (Hero, Category Strip, etc.)
   useEffect(() => {
-    api.get("/homepage").then((res) => {
-      console.log("HOMEPAGE API RESPONSE →", res.data);
-      setHomepageSections(res.data || []);
-    });
+    api.get("/homepage")
+      .then((res) => {
+        console.log("HOMEPAGE API RESPONSE →", res.data);
+        setHomepageSections(res.data || []);
+      })
+      .catch((error) => {
+        console.error("Failed to load homepage sections:", error);
+      });
+  }, []);
+
+  // 🔥 Fetch products for each subtype (Dresses, Jumpsuits, Co-ords)
+  useEffect(() => {
+    async function loadSubtypeProducts() {
+      try {
+        setIsLoadingSections(true);
+
+        // Fetch products for each subtype in parallel
+        const responses = await Promise.all(
+          HOMEPAGE_SUBTYPES.map((subtype) =>
+            api.get("/products", {
+              params: { 
+                subtypeId: subtype.id, 
+                limit: 4  // Get 4 products per subtype
+              },
+            })
+          )
+        );
+
+        // Map the responses to include subtype info
+        const populatedSections = responses
+          .map((res, index) => ({
+            id: HOMEPAGE_SUBTYPES[index].id,
+            name: HOMEPAGE_SUBTYPES[index].name,
+            products: res.data.products || [],
+          }))
+          .filter((section) => section.products.length > 0); // Only show sections with products
+
+        setSections(populatedSections);
+        console.log("Loaded subtype sections:", populatedSections);
+      } catch (error) {
+        console.error("Failed to load subtype products:", error);
+      } finally {
+        setIsLoadingSections(false);
+      }
+    }
+
+    loadSubtypeProducts();
   }, []);
 
   // Filters
@@ -53,11 +107,16 @@ export default function HomePage() {
     if (filter.maxPrice) params.maxPrice = filter.maxPrice;
     if (filter.sort) params.sort = filter.sort;
 
-    const res = await api.get("/products", { params });
-    setFilteredProducts(res.data.products || []);
+    try {
+      const res = await api.get("/products", { params });
+      setFilteredProducts(res.data.products || []);
+    } catch (error) {
+      console.error("Failed to apply filters:", error);
+      setFilteredProducts([]);
+    }
   };
 
-  // 🔥 Render sections dynamically
+  // 🔥 Render dynamic homepage sections (Hero, Category Strip, etc.)
   const renderSection = (section: HomepageSection) => {
     switch (section.type) {
       case "HERO":
@@ -90,11 +149,28 @@ export default function HomePage() {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-10">
-      {/* 🔥 DYNAMIC HOMEPAGE SECTIONS */}
+      {/* 🔥 DYNAMIC HOMEPAGE SECTIONS (Hero, Category Strips, etc.) */}
       {homepageSections
         .sort((a, b) => a.position - b.position)
         .map(renderSection)}
 
+      {/* 🔥 SUBTYPE PRODUCT SECTIONS (Dresses, Jumpsuits, Co-ords) */}
+      {isLoadingSections ? (
+        <div className="py-20 text-center">
+          <p className="text-gray-500">Loading products...</p>
+        </div>
+      ) : (
+        sections.map((section) => (
+          <FeaturedProductSection
+            key={section.id}
+            title={`Shop ${section.name}`}
+            exploreLink={`/all-products?subtypeId=${section.id}`}
+            products={section.products}
+          />
+        ))
+      )}
+
+      {/* OTHER HOMEPAGE SECTIONS */}
       <MainCharacterSection />
       <NewArrivals />
       <DiscountSection />
