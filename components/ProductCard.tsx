@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import AddToWishlistButton from "@/components/wishlist/AddToWishlistButton";
 
@@ -21,17 +21,43 @@ type Product = {
 
 export default function ProductCard({ product }: { product?: Product }) {
   const [currentImg, setCurrentImg] = useState(1);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // ---------- AUTO-SWAP LOGIC ----------
-  useEffect(() => {
+  // Function to start the auto-swap interval
+  const startInterval = () => {
     if (!product?.img2) return;
-
-    const interval = setInterval(() => {
+    
+    intervalRef.current = setInterval(() => {
       setCurrentImg((prev) => (prev === 1 ? 2 : 1));
-    }, 3000); // Changes image every 3 seconds
+    }, 3000);
+  };
 
-    return () => clearInterval(interval);
+  // Function to clear the interval
+  const stopInterval = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+  };
+
+  useEffect(() => {
+    startInterval();
+    return () => stopInterval();
   }, [product?.img2]);
+
+  // ---------- HOVER HANDLERS ----------
+  const handleMouseEnter = () => {
+    if (product?.img2) {
+      stopInterval();
+      setCurrentImg(2); // Show second image on hover
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (product?.img2) {
+      setCurrentImg(1); // Reset to first image
+      startInterval(); // Resume auto-swap
+    }
+  };
 
   if (!product) return null;
 
@@ -57,7 +83,11 @@ export default function ProductCard({ product }: { product?: Product }) {
   const hasDiscount = finalPrice < price;
 
   return (
-    <div className="group relative bg-white transition-all duration-300 border-none">
+    <div 
+      className="group relative bg-white transition-all duration-300 border-none"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       <div className="absolute top-3 right-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
         <AddToWishlistButton productId={product.id} />
       </div>
@@ -83,7 +113,7 @@ export default function ProductCard({ product }: { product?: Product }) {
             />
           )}
           
-          {/* Progress Indicators (Optional - shows which image is active) */}
+          {/* Progress Indicators */}
           {img2 && (
             <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
               <div className={`h-1 w-4 rounded-full transition-all ${currentImg === 1 ? "bg-brandPink" : "bg-gray-200"}`} />
