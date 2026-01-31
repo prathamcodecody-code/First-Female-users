@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
+import { FiChevronDown, FiX, FiFilter, FiCheck, FiRotateCcw } from "react-icons/fi";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function HomeFilter({
   onFilter,
@@ -9,29 +11,39 @@ export default function HomeFilter({
   onFilter?: (f: any) => void;
 }) {
   const [types, setTypes] = useState<any[]>([]);
-const [filter, setFilter] = useState({
-  typeId: "",
-  minPrice: "",
-  maxPrice: "",
-  sort: "",
-});
+  const [colors, setColors] = useState<any[]>([]);
+  const [occasions, setOccasions] = useState<any[]>([]);
+
+  const [filter, setFilter] = useState({
+    typeId: "",
+    colors: [] as number[],
+    occasions: [] as number[],
+    minPrice: 0,
+    maxPrice: 10000,
+    sort: "",
+  });
 
   const [openMobile, setOpenMobile] = useState(false);
 
+  /* ---------- FETCH ATTRIBUTES ---------- */
   useEffect(() => {
-  api
-    .get("/product-types")
-    .then((res) => setTypes(Array.isArray(res.data) ? res.data : []))
-    .catch(() => setTypes([]));
-}, []);
+    Promise.all([
+      api.get("/product-types"),
+      api.get("/attributes/colors"),
+      api.get("/attributes/occasions"),
+    ]).then(([t, c, o]) => {
+      setTypes(t.data || []);
+      setColors(c.data || []);
+      setOccasions(o.data || []);
+    });
+  }, []);
 
-  const handlePrice = (value: string) => {
-    if (!value) {
-      setFilter({ ...filter, minPrice: "", maxPrice: "" });
-      return;
-    }
-    const [min, max] = value.split("-");
-    setFilter({ ...filter, minPrice: min, maxPrice: max });
+  const toggleAttribute = (key: "colors" | "occasions", id: number) => {
+    const existing = filter[key];
+    const updated = existing.includes(id)
+      ? existing.filter((x) => x !== id)
+      : [...existing, id];
+    setFilter({ ...filter, [key]: updated });
   };
 
   const apply = () => {
@@ -40,73 +52,125 @@ const [filter, setFilter] = useState({
   };
 
   const reset = () => {
-    setFilter({ typeId: "", minPrice: "", maxPrice: "", sort: "" });
+    const fresh = { typeId: "", colors: [], occasions: [], minPrice: 0, maxPrice: 10000, sort: "" };
+    setFilter(fresh);
+    onFilter?.(fresh);
   };
 
-  /* ================= DESKTOP FILTER ================= */
   const FilterBody = (
-    <div className="bg-white border border-gray-100 p-6 rounded-xl shadow-sm w-full max-w-[280px]">
-      <div className="mb-6">
-        <h2 className="text-lg font-bold">Filter</h2>
-        <p className="text-xs text-gray-400 uppercase">Refine search</p>
-      </div>
+    <div className="w-full space-y-8">
+      {/* 1. CATEGORIES (Select) */}
+      <AccordionSection title="Collection" defaultOpen={true}>
+        <select
+          value={filter.typeId}
+          onChange={(e) => setFilter({ ...filter, typeId: e.target.value })}
+          className="w-full bg-gray-50 border-none px-4 py-3 text-xs font-bold uppercase tracking-widest rounded-sm outline-none ring-1 ring-gray-100 focus:ring-brandPink"
+        >
+          <option value="">All Collections</option>
+          {types.map((t) => (
+            <option key={t.id} value={t.id}>{t.name}</option>
+          ))}
+        </select>
+      </AccordionSection>
 
-      <div className="flex flex-col gap-6">
-        <FilterSelect
-  label="Product Type"
-  value={filter.typeId}
-  onChange={(e) =>
-    setFilter({ ...filter, typeId: e.target.value })
-  }
->
-  <option value="">All Types</option>
-  {types.map((t) => (
-    <option key={t.id} value={t.id}>{t.name}</option>
-  ))}
-</FilterSelect>
+      {/* 2. PRICE RANGE SLIDER */}
+      <AccordionSection title="Price range">
+        <div className="pt-8 pb-2 px-2">
+          <div className="relative w-full h-1 bg-gray-100 rounded-full">
+            <div 
+              className="absolute h-full bg-brandPink rounded-full" 
+              style={{ 
+                left: `${(filter.minPrice / 10000) * 100}%`, 
+                right: `${100 - (filter.maxPrice / 10000) * 100}%` 
+              }} 
+            />
+            <input
+              type="range" min="0" max="10000" step="100"
+              value={filter.minPrice}
+              onChange={(e) => setFilter({ ...filter, minPrice: Math.min(Number(e.target.value), filter.maxPrice - 500) })}
+              className="absolute w-full -top-1 h-2 appearance-none bg-transparent pointer-events-none range-slider-input"
+            />
+            <input
+              type="range" min="0" max="10000" step="100"
+              value={filter.maxPrice}
+              onChange={(e) => setFilter({ ...filter, maxPrice: Math.max(Number(e.target.value), filter.minPrice + 500) })}
+              className="absolute w-full -top-1 h-2 appearance-none bg-transparent pointer-events-none range-slider-input"
+            />
+            {/* Labels */}
+            <div className="flex justify-between mt-6 text-[10px] font-black text-brandBlack uppercase tracking-tighter">
+              <span>₹{filter.minPrice}</span>
+              <span>₹{filter.maxPrice}</span>
+            </div>
+          </div>
+        </div>
+      </AccordionSection>
 
-        <FilterSelect
-  label="Price Range"
-  value={
-    filter.minPrice && filter.maxPrice
-      ? `${filter.minPrice}-${filter.maxPrice}`
-      : ""
-  }
-  onChange={(e) => handlePrice(e.target.value)}
->
-  <option value="0-499">Under ₹500</option>
-<option value="500-999">₹500 – ₹999</option>
-<option value="1000-1499">₹1000 – ₹1499</option>
-<option value="1500-1999">₹1500 – ₹1999</option>
-<option value="2000-2999">₹2000 – ₹2999</option>
-<option value="3000-4999">₹3000 – ₹4999</option>
-<option value="5000-100000">₹5000+</option>
-</FilterSelect>
+      {/* 3. COLOR PALETTE */}
+      <AccordionSection title="Color Palette">
+        <div className="grid grid-cols-2 gap-2">
+          {colors.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => toggleAttribute("colors", c.id)}
+              className={`flex items-center justify-between px-3 py-2 border rounded-sm transition-all ${
+                filter.colors.includes(c.id)
+                  ? "bg-brandBlack border-brandBlack text-white shadow-md"
+                  : "bg-white border-gray-100 text-gray-500 hover:border-brandPink"
+              }`}
+            >
+              <span className="text-[10px] font-bold uppercase">{c.name}</span>
+              {filter.colors.includes(c.id) && <FiCheck size={10} />}
+            </button>
+          ))}
+        </div>
+      </AccordionSection>
 
+      {/* 4. OCCASION */}
+      <AccordionSection title="Occasion">
+        <div className="flex flex-wrap gap-2">
+          {occasions.map((o) => (
+            <button
+              key={o.id}
+              onClick={() => toggleAttribute("occasions", o.id)}
+              className={`px-3 py-1.5 border rounded-sm text-[10px] font-bold uppercase transition-all ${
+                filter.occasions.includes(o.id)
+                  ? "bg-brandPink border-brandPink text-white"
+                  : "bg-white border-gray-100 text-gray-400 hover:border-gray-200"
+              }`}
+            >
+              {o.name}
+            </button>
+          ))}
+        </div>
+      </AccordionSection>
 
-        <FilterSelect
-          label="Sort By"
+      {/* 5. SORTING */}
+      <AccordionSection title="Sort By">
+        <select
           value={filter.sort}
           onChange={(e) => setFilter({ ...filter, sort: e.target.value })}
+          className="w-full bg-gray-50 border-none px-4 py-3 text-xs font-bold uppercase rounded-sm outline-none ring-1 ring-gray-100"
         >
           <option value="">Recommended</option>
-          <option value="newest">Newest</option>
-          <option value="low_to_high">Low → High</option>
-          <option value="high_to_low">High → Low</option>
-        </FilterSelect>
+          <option value="newest">New Arrival</option>
+          <option value="low_to_high">Price: Low to High</option>
+          <option value="high_to_low">Price: High to Low</option>
+        </select>
+      </AccordionSection>
 
+      {/* ACTIONS */}
+      <div className="pt-6 space-y-3">
         <button
           onClick={apply}
-          className="w-full bg-brandPink text-white py-2 rounded-md font-semibold"
+          className="w-full bg-brandBlack text-white py-4 rounded-sm text-[11px] font-black uppercase tracking-[0.3em] shadow-xl hover:bg-brandPink transition-all active:scale-95"
         >
-          Apply Filters
+          Refine Results
         </button>
-
         <button
           onClick={reset}
-          className="w-full text-xs uppercase tracking-widest text-gray-500"
+          className="w-full flex items-center justify-center gap-2 text-[9px] font-bold uppercase tracking-widest text-gray-400 hover:text-brandBlack transition-colors"
         >
-          Reset All
+          <FiRotateCcw size={12} /> Reset Canvas
         </button>
       </div>
     </div>
@@ -115,54 +179,74 @@ const [filter, setFilter] = useState({
   return (
     <>
       {/* DESKTOP */}
-      <div className="hidden lg:block">{FilterBody}</div>
+      <div className="hidden lg:block bg-white border border-gray-100 p-8 rounded-sm shadow-sm sticky top-28">
+        <div className="flex items-center gap-2 mb-8 text-brandBlack border-b border-gray-50 pb-4">
+          <FiFilter className="text-brandPink" />
+          <h2 className="text-[11px] font-black uppercase tracking-[0.4em]">Filter Studio</h2>
+        </div>
+        {FilterBody}
+      </div>
 
-      {/* MOBILE FILTER BUTTON */}
-      <div className="lg:hidden sticky bottom-0 bg-white border-t z-30 px-4 py-3">
+      {/* MOBILE TRIGGER */}
+      <div className="lg:hidden sticky bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t z-40 px-4 py-4">
         <button
           onClick={() => setOpenMobile(true)}
-          className="w-full bg-black text-white py-3 rounded-full font-semibold"
+          className="w-full bg-brandBlack text-white py-4 rounded-full text-[11px] font-black uppercase tracking-[0.2em] shadow-2xl"
         >
-          Filter Products
+          Refine Search
         </button>
       </div>
 
-      {/* MOBILE BOTTOM SHEET */}
-      {openMobile && (
-        <div className="fixed inset-0 z-50 bg-black/40">
-          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-6 max-h-[85vh] overflow-y-auto">
-            <div className="flex justify-between mb-4">
-              <h2 className="font-bold">Filter</h2>
-              <button onClick={() => setOpenMobile(false)}>✕</button>
-            </div>
-            {FilterBody}
-          </div>
-        </div>
-      )}
+      {/* MOBILE SHEET */}
+      <AnimatePresence>
+        {openMobile && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+          >
+            <motion.div 
+              initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="absolute bottom-0 left-0 right-0 bg-white rounded-t-[2rem] p-8 max-h-[90vh] overflow-y-auto no-scrollbar shadow-2xl"
+            >
+              <div className="flex justify-between items-center mb-8">
+                <h2 className="text-sm font-black uppercase tracking-widest italic font-serif">Refine <span className="text-brandPink">Studio</span></h2>
+                <button onClick={() => setOpenMobile(false)} className="p-2 bg-gray-50 rounded-full"><FiX size={20}/></button>
+              </div>
+              {FilterBody}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
 
-/* ---------- UI Helper ---------- */
-
-function FilterSelect({
-  label,
-  children,
-  ...props
-}: React.SelectHTMLAttributes<HTMLSelectElement> & {
-  label: string;
-}) {
+function AccordionSection({ title, children, defaultOpen = false }: any) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
   return (
-    <div className="flex flex-col gap-1">
-      <label className="text-xs uppercase font-semibold text-gray-400">
-        {label}
-      </label>
-      <select
-        {...props}
-        className="h-11 rounded-lg border px-3 text-sm bg-gray-50"
+    <div className="space-y-4">
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between group"
       >
-        {children}
-      </select>
+        <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] group-hover:text-brandBlack transition-colors">
+          {title}
+        </span>
+        <FiChevronDown className={`transition-transform duration-500 text-gray-300 group-hover:text-brandBlack ${isOpen ? "rotate-180" : ""}`} />
+      </button>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            {children}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
