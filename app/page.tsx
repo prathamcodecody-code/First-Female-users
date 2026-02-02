@@ -98,24 +98,42 @@ export default function HomePage() {
   }, []);
 
   // Filters
-  const applyFilters = async (filter: any) => {
-    setHasAppliedFilter(true);
+ const applyFilters = async (filter: any) => {
+  setHasAppliedFilter(true);
 
-    const params: any = {};
-    if (filter.typeId) params.typeId = filter.typeId;
-    if (filter.minPrice) params.minPrice = filter.minPrice;
-    if (filter.maxPrice) params.maxPrice = filter.maxPrice;
-    if (filter.sort) params.sort = filter.sort;
+  // 1. Construct the params object
+  const params: any = {};
+  
+  if (filter.typeId) params.typeId = filter.typeId;
+  if (filter.minPrice !== undefined) params.minPrice = filter.minPrice;
+  if (filter.maxPrice !== undefined) params.maxPrice = filter.maxPrice;
+  if (filter.sort) params.sort = filter.sort;
 
-    try {
-      const res = await api.get("/products", { params });
-      setFilteredProducts(res.data.products || []);
-    } catch (error) {
-      console.error("Failed to apply filters:", error);
-      setFilteredProducts([]);
-    }
-  };
+  // 2. Handle Arrays (Colors and Occasions)
+  // Most APIs expect: colors=1,2,3 or colors[]=1&colors[]=2
+  if (filter.colors && filter.colors.length > 0) {
+    params.colors = filter.colors.join(","); 
+  }
+  
+  if (filter.occasions && filter.occasions.length > 0) {
+    params.occasions = filter.occasions.join(",");
+  }
 
+  try {
+    console.log("📡 Fetching products with params:", params); // Debugging
+    
+    const res = await api.get("/products", { params });
+    
+    // 3. Handle data structure mismatch
+    // Ensure you are targeting the correct field (res.data vs res.data.products)
+    const products = res.data.products || res.data || [];
+    setFilteredProducts(products);
+    
+  } catch (error) {
+    console.error("❌ Failed to apply filters:", error);
+    setFilteredProducts([]);
+  }
+};
   // 🔥 Render dynamic homepage sections (Hero, Category Strip, etc.)
   const renderSection = (section: HomepageSection) => {
     switch (section.type) {
