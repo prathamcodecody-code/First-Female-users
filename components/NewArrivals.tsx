@@ -45,10 +45,10 @@ export default function NewArrivals() {
   }, []);
 
   return (
-    <section className="mt-24">
-      {/* 1. EDITORIAL CAROUSEL (Top of Section) */}
+    <section className="mt-18">
+      
       <div className="mb-20">
-        <NewInEditorialCarousel />
+        
       </div>
 
       {/* 2. GRID HEADER */}
