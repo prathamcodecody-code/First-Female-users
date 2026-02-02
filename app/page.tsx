@@ -11,6 +11,8 @@ import MainCharacterSection from "@/components/Home/MainCharacterSection";
 import FeaturedProductSection from "@/components/Home/ShopByCategory";
 import ResolvedCategoryStrip from "@/components/Home/ResolvedCategoryStrip";
 import { api } from "@/lib/api";
+import InfluencerSection from "@/components/Home/InfluencerCard";
+import EditorialCarousel from "@/components/Home/NewInEditorialCarousel";
 
 type Product = {
   id: number;
@@ -26,6 +28,7 @@ type HomepageSection = {
   type: "HERO" | "CATEGORY_STRIP" | "EDITORIAL" | "INFLUENCER";
   title?: string;
   config: any;
+  influencerItems?: any[];
   position: number;
   isActive: boolean;
 };
@@ -98,7 +101,7 @@ export default function HomePage() {
   }, []);
 
   // Filters
- const applyFilters = async (filter: any) => {
+  const applyFilters = async (filter: any) => {
   setHasAppliedFilter(true);
 
   // 1. Construct the params object
@@ -134,45 +137,71 @@ export default function HomePage() {
     setFilteredProducts([]);
   }
 };
+
   // 🔥 Render dynamic homepage sections (Hero, Category Strip, etc.)
-  const renderSection = (section: HomepageSection) => {
-    switch (section.type) {
-      case "HERO":
-        return (
-          <HeroCarousel
-            key={section.id}
-            slides={section.config?.slides || []}
-          />
-        );
+ const renderSection = (section: HomepageSection) => {
+  console.log("Rendering section:", section.type, section); // Debug log
+  
+  switch (section.type) {
+    case "HERO":
+      return (
+        <HeroCarousel
+          key={section.id}
+          slides={section.config?.slides || []}
+        />
+      );
 
-      case "CATEGORY_STRIP":
-        return (
-          <ResolvedCategoryStrip
-            key={section.id}
-            items={section.config?.items || []}
-          />
-        );
+    case "CATEGORY_STRIP":
+      return (
+        <ResolvedCategoryStrip
+          key={section.id}
+          items={section.config?.items || []}
+        />
+      );
 
-      case "EDITORIAL":
-        return (
-          <div key={section.id}>
-            Editorial Section (TODO)
-          </div>
-        );
+    case "INFLUENCER":
+      return (
+        <InfluencerSection
+          key={section.id}
+          title={section.title}
+          items={section.influencerItems || []} // ✅ Use influencerItems from DB
+        />
+      );
 
-      default:
-        return null;
-    }
-  };
+    case "EDITORIAL":
+      console.log("Editorial section config:", section.config);
+  return (
+    <EditorialCarousel
+      key={section.id}
+      title={section.title}
+      items={section.config?.items || []}
+    />
+  );
 
+    default:
+      return null;
+  }
+};
+const editorialSections = homepageSections.filter(
+  (s) => s.isActive && s.type === "EDITORIAL"
+);
+
+const nonEditorialSections = homepageSections.filter(
+  (s) => s.isActive && s.type !== "EDITORIAL" && s.type !== "INFLUENCER"
+);
+
+const influencerSections = homepageSections.filter(
+  (s) => s.isActive && s.type === "INFLUENCER"
+);
   return (
     <div className="max-w-7xl mx-auto px-6 py-10">
       {/* 🔥 DYNAMIC HOMEPAGE SECTIONS (Hero, Category Strips, etc.) */}
-      {homepageSections
-        .sort((a, b) => a.position - b.position)
-        .map(renderSection)}
-
-      {/* 🔥 SUBTYPE PRODUCT SECTIONS (Dresses, Jumpsuits, Co-ords) */}
+  
+     {nonEditorialSections
+  .sort((a, b) => a.position - b.position)
+  .map(renderSection)}
+  
+        {/* 🔥 SUBTYPE PRODUCT SECTIONS (Dresses, Jumpsuits, Co-ords) */}
       {isLoadingSections ? (
         <div className="py-20 text-center">
           <p className="text-gray-500">Loading products...</p>
@@ -190,6 +219,16 @@ export default function HomePage() {
 
       {/* OTHER HOMEPAGE SECTIONS */}
       <MainCharacterSection />
+      {/* 🔥 EDITORIAL — RIGHT ABOVE NEW ARRIVALS */}
+{editorialSections
+  .sort((a, b) => a.position - b.position)
+  .map((section) => (
+    <EditorialCarousel
+      key={section.id}
+      title={section.title}
+      items={section.config?.items || []}
+    />
+  ))}
       <NewArrivals />
       <DiscountSection />
       <TrendingNow />
@@ -222,6 +261,16 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      {/* INFLUENCER — ALWAYS LAST */}
+{homepageSections
+  .filter((s) => s.isActive && s.type === "INFLUENCER")
+  .map((section) => (
+    <InfluencerSection
+      key={section.id}
+      title={section.title}
+      items={section.influencerItems || []}
+    />
+  ))}
     </div>
   );
 }
