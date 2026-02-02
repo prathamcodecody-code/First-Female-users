@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import {
   FaPhoneAlt,
@@ -17,6 +17,7 @@ export default function ContactPage() {
     phone: "",
     subject: "",
     message: "",
+    reason: "GENERAL",
   });
 
   const [loading, setLoading] = useState(false);
@@ -24,6 +25,10 @@ export default function ContactPage() {
 
   const submit = async () => {
     setLoading(true);
+    if (!form.email || !form.message) {
+  alert("Email and message are required");
+  return;
+}
     try {
       await api.post("/contact", form);
       setSuccess(true);
@@ -33,6 +38,7 @@ export default function ContactPage() {
         phone: "",
         subject: "",
         message: "",
+        reason : "",
       });
     } catch {
       alert("Failed to send message");
@@ -40,6 +46,12 @@ export default function ContactPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+  if (!success) return;
+  const t = setTimeout(() => setSuccess(false), 4000);
+  return () => clearTimeout(t);
+}, [success]);
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-12 text-gray-700">
@@ -136,7 +148,17 @@ export default function ContactPage() {
                 setForm({ ...form, subject: e.target.value })
               }
             />
-
+<select
+  className="border p-3 rounded-md md:col-span-2"
+  value={form.reason}
+  onChange={(e) =>
+    setForm({ ...form, reason: e.target.value })
+  }
+>
+  <option value="GENERAL">General Inquiry</option>
+  <option value="ORDER_QUERY">Order Related</option>
+  <option value="PAYMENT_FAILED">Payment Failed</option>
+</select>
             <textarea
               className="border p-3 rounded-md md:col-span-2"
               rows={5}
@@ -210,4 +232,3 @@ function ContactItem({
     </div>
   );
 }
-
