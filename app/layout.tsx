@@ -6,9 +6,11 @@ import { WishlistProvider } from "@/app/context/WishlistContext";
 import { CheckoutProvider } from "@/app/context/CheckoutContext";
 import { Toaster } from "react-hot-toast";
 import WhatsAppFloating from "@/components/ui/WhatsAppFloating";
+import Script from "next/script";
 
 // layout.tsx refinement
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  
   return (
     <html lang="en">
       {/* Changed bg-gray-50 to bg-white for that clean boutique feel */}
@@ -25,6 +27,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <main className="min-h-screen">
                 {children}
                 <WhatsAppFloating />
+                <Script
+  src="https://www.instagram.com/embed.js"
+  strategy="afterInteractive"
+/>
               </main>
 
               <Footer />
