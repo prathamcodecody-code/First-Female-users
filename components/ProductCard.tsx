@@ -21,22 +21,19 @@ type Product = {
 
 export default function ProductCard({ product }: { product?: Product }) {
   const [currentImg, setCurrentImg] = useState(1);
+  const [rotate, setRotate] = useState({ x: 0, y: 0 }); // Tilt state
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Function to start the auto-swap interval
+  // ---------- AUTO-SWAP LOGIC ----------
   const startInterval = () => {
     if (!product?.img2) return;
-    
     intervalRef.current = setInterval(() => {
       setCurrentImg((prev) => (prev === 1 ? 2 : 1));
     }, 3000);
   };
 
-  // Function to clear the interval
   const stopInterval = () => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
+    if (intervalRef.current) clearInterval(intervalRef.current);
   };
 
   useEffect(() => {
@@ -44,18 +41,34 @@ export default function ProductCard({ product }: { product?: Product }) {
     return () => stopInterval();
   }, [product?.img2]);
 
-  // ---------- HOVER HANDLERS ----------
+  // ---------- TILT & HOVER HANDLERS ----------
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const card = e.currentTarget;
+    const box = card.getBoundingClientRect();
+    const x = e.clientX - box.left;
+    const y = e.clientY - box.top;
+    const centerX = box.width / 2;
+    const centerY = box.height / 2;
+    
+    // Calculate rotation (max 10 degrees tilt)
+    const rotateX = (y - centerY) / 10;
+    const rotateY = (centerX - x) / 10;
+
+    setRotate({ x: rotateX, y: rotateY });
+  };
+
   const handleMouseEnter = () => {
     if (product?.img2) {
       stopInterval();
-      setCurrentImg(2); // Show second image on hover
+      setCurrentImg(2);
     }
   };
 
   const handleMouseLeave = () => {
+    setRotate({ x: 0, y: 0 }); // Reset tilt
     if (product?.img2) {
-      setCurrentImg(1); // Reset to first image
-      startInterval(); // Resume auto-swap
+      setCurrentImg(1);
+      startInterval();
     }
   };
 
@@ -64,14 +77,11 @@ export default function ProductCard({ product }: { product?: Product }) {
   const baseImgUrl = `${process.env.NEXT_PUBLIC_API_URL}/uploads/products/`;
   const img1 = product.img1 ? `${baseImgUrl}${product.img1}` : "/placeholder.png";
   const img2 = product.img2 ? `${baseImgUrl}${product.img2}` : null;
-
   const productUrl = `/products/${product.slug}-${product.id}`;
   const price = Number(product.price) || 0;
 
-  // ---------- DISCOUNT LOGIC ----------
   let finalPrice = price;
   let discountText: string | null = null;
-
   if (product.discountType === "PERCENT" && product.discountValue) {
     finalPrice = Math.round(price - (price * product.discountValue) / 100);
     discountText = `${product.discountValue}% OFF`;
@@ -84,17 +94,24 @@ export default function ProductCard({ product }: { product?: Product }) {
 
   return (
     <div 
-      className="group relative bg-white transition-all duration-300 border-none"
+      className="group relative bg-white transition-all duration-300 border-none perspective-1000"
       onMouseEnter={handleMouseEnter}
+      onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
+      style={{ perspective: "1000px" }} // Required for 3D effect
     >
       <div className="absolute top-3 right-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
         <AddToWishlistButton productId={product.id} />
       </div>
 
       <Link href={productUrl} className="block">
-        <div className="relative w-full aspect-[3/4] bg-[#F9F9F9] overflow-hidden rounded-sm">
-          
+        <div 
+          className="relative w-full aspect-[3/4] bg-[#F9F9F9] overflow-hidden rounded-sm transition-transform duration-200 ease-out shadow-sm group-hover:shadow-xl"
+          style={{ 
+            transform: `rotateX(${rotate.x}deg) rotateY(${rotate.y}deg) scale(1.02)`,
+            transformStyle: "preserve-3d" 
+          }}
+        >
           {/* PRIMARY IMAGE */}
           <img
             src={img1}
@@ -116,33 +133,33 @@ export default function ProductCard({ product }: { product?: Product }) {
           {/* Progress Indicators */}
           {img2 && (
             <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
-              <div className={`h-1 w-4 rounded-full transition-all ${currentImg === 1 ? "bg-brandPink" : "bg-gray-200"}`} />
-              <div className={`h-1 w-4 rounded-full transition-all ${currentImg === 2 ? "bg-brandPink" : "bg-gray-200"}`} />
+              <div className={`h-0.5 w-4 rounded-full transition-all ${currentImg === 1 ? "bg-brandPink" : "bg-gray-200"}`} />
+              <div className={`h-0.5 w-4 rounded-full transition-all ${currentImg === 2 ? "bg-brandPink" : "bg-gray-200"}`} />
             </div>
           )}
 
           {hasDiscount && (
-            <span className="absolute bottom-3 left-3 z-10 bg-white/90 backdrop-blur-sm text-[10px] px-2 py-1 font-black uppercase tracking-widest text-red-600 shadow-sm">
+            <span className="absolute bottom-3 left-3 z-10 bg-brandBlack text-white text-[9px] px-2 py-1 font-black uppercase tracking-widest shadow-sm">
               {discountText}
             </span>
           )}
         </div>
 
-        <div className="mt-3 space-y-1 px-1">
-          <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">
-            {product.brand || "New Arrival"}
+        <div className="mt-4 space-y-1 px-1 transition-transform duration-300 group-hover:translate-y-[-2px]">
+          <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-black">
+            {product.brand || "Boutique"}
           </p>
 
-          <h3 className="text-[13px] font-medium text-gray-800 leading-tight group-hover:text-brandPink transition-colors line-clamp-1">
+          <h3 className="text-[13px] font-bold text-gray-800 leading-tight group-hover:text-brandPink transition-colors line-clamp-1">
             {product.title}
           </h3>
 
           <div className="flex items-center gap-2 pt-1">
-            <span className="text-sm font-bold text-gray-900">
+            <span className="text-sm font-black text-brandBlack">
               ₹{finalPrice.toLocaleString()}
             </span>
             {hasDiscount && (
-              <span className="text-xs text-gray-400 line-through">
+              <span className="text-[11px] text-gray-400 line-through font-medium">
                 ₹{price.toLocaleString()}
               </span>
             )}
