@@ -51,74 +51,82 @@ export default function EditorialCarousel({
     : null;
 
   return (
-    <section className="mt-20 md:mt-32 px-4 md:px-10 max-w-[1440px] mx-auto">
+    <section className="mt-12 md:mt-32 px-2 md:px-10 max-w-[1440px] mx-auto">
       {title && (
-        <div className="mb-8 md:mb-12">
-          <h2 className="text-3xl md:text-6xl font-serif italic text-brandBlack tracking-tight">
+        <div className="mb-6 md:mb-12 px-2 md:px-0">
+          <h2 className="text-2xl md:text-6xl font-serif italic text-brandBlack tracking-tight">
             {title}
           </h2>
-          <div className="h-1 w-16 md:w-20 bg-brandPink mt-2 md:mt-4" />
+          <div className="h-1 w-12 md:w-20 bg-brandPink mt-2 md:mt-4" />
         </div>
       )}
 
       <motion.div
         animate={{ backgroundColor: slide.bgColor || "#F9F9F9" }}
-        className="relative h-[400px] md:h-[600px] rounded-2xl overflow-hidden shadow-2xl shadow-black/5 flex flex-row"
+        /* Force flex-row on mobile to keep items side-by-side */
+        className="relative h-[350px] sm:h-[450px] md:h-[650px] rounded-2xl overflow-hidden shadow-2xl shadow-black/5 flex flex-row"
       >
         <AnimatePresence mode="wait">
           <motion.div
             key={active}
-            className="flex flex-row items-center h-full w-full"
+            className="flex flex-row items-stretch h-full w-full"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
           >
-            {/* LEFT SIDE: Image Content */}
-            <div className="w-1/2 md:w-3/5 h-full relative p-4 md:p-0">
+            {/* LEFT SIDE: Editorial Image - NO CROPPING */}
+            <div className="w-1/2 md:w-3/5 relative bg-white/20">
               {imageUrl ? (
                 <motion.img
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   src={imageUrl}
                   alt=""
-                  // Changed object-cover to object-contain to prevent cropping
-                  className="w-full h-full object-contain md:object-cover"
+                  /* KEY FIX: object-contain prevents cropping. 
+                     h-full ensures it scales to the container height */
+                  className="w-full h-full object-contain"
                 />
               ) : (
                 <div className="w-full h-full bg-gray-100 animate-pulse" />
               )}
               
-              {/* Overlay Text - Hidden on very small screens for clarity */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-4 md:p-10 pointer-events-none">
-                <p className="text-white/90 uppercase tracking-[0.3em] text-[8px] md:text-[10px] mb-1">Featured</p>
-                <h3 className="text-white text-lg md:text-5xl font-black uppercase tracking-tighter leading-none italic font-serif">
-                   {slide.title || "The New Season"}
+              {/* Responsive Text Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent flex flex-col justify-end p-3 md:p-14 pointer-events-none">
+                <p className="text-white/90 uppercase tracking-[0.2em] text-[7px] md:text-xs mb-1 font-black">
+                  Featured
+                </p>
+                <h3 className="text-white text-sm md:text-6xl font-black uppercase tracking-tighter leading-tight italic font-serif">
+                  {slide.title || "The New Season"}
                 </h3>
               </div>
             </div>
 
             {/* RIGHT SIDE: Product Card */}
-            <div className="w-1/2 md:w-2/5 flex items-center justify-center p-2 md:p-12 bg-white/10 backdrop-blur-sm">
+            <div className="w-1/2 md:w-2/5 flex items-center justify-center p-2 sm:p-4 md:p-16 bg-white/40 backdrop-blur-md border-l border-white/10">
               {product ? (
-                // scale-90 on mobile makes the ProductCard fit better side-by-side
-                <div className="w-full max-w-[160px] md:max-w-[320px] scale-[0.85] md:scale-100 transform transition-transform duration-500">
+                /* scale down on mobile to ensure the full card fits side-by-side */
+                <div className="w-full max-w-full scale-[0.9] sm:scale-100 transition-transform duration-500 hover:scale-[1.02]">
                   <ProductCard product={product} />
                 </div>
               ) : (
-                <div className="w-[120px] md:w-[280px] aspect-[3/4] bg-white/50 rounded-lg animate-pulse" />
+                <div className="w-[100px] md:w-[340px] aspect-[3/4] bg-white/80 rounded-xl animate-pulse shadow-sm" />
               )}
             </div>
           </motion.div>
         </AnimatePresence>
 
-        {/* NAVIGATION DOTS */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-30">
+        {/* NAVIGATION DOTS - Smaller for mobile */}
+        <div className="absolute bottom-3 md:bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5 md:gap-3 z-30">
           {items.map((_, i) => (
             <button
               key={i}
               onClick={() => setActive(i)}
-              className={`h-1 transition-all duration-300 rounded-full ${active === i ? "w-8 bg-brandPink" : "w-4 bg-black/20"}`}
+              className={`h-1 md:h-1.5 transition-all duration-300 rounded-full ${
+                active === i 
+                  ? "w-6 md:w-10 bg-brandPink" 
+                  : "w-3 md:w-5 bg-black/10 hover:bg-black/30"
+              }`}
             />
           ))}
         </div>
